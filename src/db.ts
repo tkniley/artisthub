@@ -39,20 +39,20 @@ const openDB = (): Promise<IDBDatabase> => {
 
 // Seed Data
 const DEFAULT_PROFILE: Profile = {
-  name: 'Eleonora Vance',
-  tagline: 'Sculptor & Painter of Ethereal Geometries',
+  name: 'Vonder Gray',
+  tagline: 'Contemporary Painter & Mixed-Media Artist',
   philosophy: 'Art is the silent geometry of the soul, rendered in stone, ink, and light. My work explores the spaces between form and nothingness, capturing the quiet weight of existence.',
-  heroImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1200',
-  bioText: 'Eleonora Vance (b. 1988) is a contemporary mixed-media artist and sculptor based in Florence and Paris. Drawing inspiration from brutalist architecture, Japanese wabi-sabi philosophy, and classical Italian marble work, Vance creates tactile objects and paintings that contemplate space, void, and stillness.\n\nShe graduated with honors from the Accademia di Belle Arti di Firenze and subsequently trained in traditional stone carving in Carrara. Her practice is characterized by a deep reverence for raw materials—including Carrara marble, raw linen, alabaster, gesso, and hand-gathered mineral pigments. By leaving portions of her materials in their natural, unrefined state, she invites the viewer to appreciate the geological history of the medium alongside the deliberate human intervention.',
+  heroImage: '/vonder/Love.jpg',
+  bioText: 'Vonder Gray (b. 1988) is an American contemporary painter and mixed-media artist based in Denver, Colorado. Working out of her studio in the historic art districts, Vonder creates highly energetic, layered abstract canvases that contemplate space, void, and stillness.\n\nShe is best known for her bold use of fluid pigments, heavy acrylic layering, fixed charcoal gestures, and delicate gold accents. Her work has been shown in prominent contemporary spaces across the West, including regular installations at Rolo Gallery. She contemplates the boundary where raw feeling meets deliberate creative expression.',
   portraitImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600',
   cv: [
     {
       id: 'cv-1',
       category: 'Selected Solo Exhibitions',
       items: [
-        { id: 'cvi-1', year: '2025', title: 'The Weight of Absence', detail: 'Galerie Alabaster, Paris, France' },
-        { id: 'cvi-2', year: '2024', title: 'Ethereal Geometries', detail: 'Contemporary Art Center, Milan, Italy' },
-        { id: 'cvi-3', year: '2022', title: 'Silent Dialogues', detail: 'Tate Modern Project Space, London, UK' },
+        { id: 'cvi-1', year: '2026', title: 'Variations in Joy', detail: 'Rolo Gallery, Denver, CO' },
+        { id: 'cvi-2', year: '2025', title: 'The Weight of Absence', detail: 'Galerie Alabaster, Paris, France' },
+        { id: 'cvi-3', year: '2024', title: 'Ethereal Geometries', detail: 'Contemporary Art Center, Milan, Italy' },
       ],
     },
     {
@@ -77,155 +77,371 @@ const DEFAULT_PROFILE: Profile = {
 
 const DEFAULT_ARTWORKS: Artwork[] = [
   {
-    id: 'art-1',
-    title: 'Silent Dialogue I',
-    year: '2025',
-    medium: 'Carved Alabaster & White Oak',
-    dimensions: '18 x 12 x 8 inches',
-    price: '$4,200',
+    id: 'art-vonder-1',
+    title: 'Chaos in the Moment',
+    year: '2026',
+    medium: 'Mixed Media & Acrylic on Canvas',
+    dimensions: '40 x 40 inches',
+    price: '$3,400',
     status: 'available',
-    description: 'An exploration of intersecting geometric planes carved from solid alabaster, mounted on a hand-charred white oak base.',
-    imageUrl: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?q=80&w=800',
-    collections: ['Sculpture', 'Alabaster Series'],
+    description: 'A vibrant exploration of sudden movement and emotional intensity, captured through textured layering.',
+    imageUrl: '/vonder/Chaos%20in%20the%20Moment.jpg',
+    collections: ['Variations in Joy'],
     isGallery: true,
     isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 1,
+  },
+  {
+    id: 'art-vonder-2',
+    title: 'Early Snow at the Botanic Gardens',
+    year: '2026',
+    medium: 'Oil & Marble Dust on Linen',
+    dimensions: '48 x 36 inches',
+    price: '$4,500',
+    status: 'available',
+    description: 'Delicate crystalline white structures meeting dark organic forms, representing the first whisper of winter.',
+    imageUrl: '/vonder/Early%20Snow%20at%20the%20Botanic%20Gardens.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
+  },
+  {
+    id: 'art-vonder-3',
+    title: 'Heat of the Moment',
+    year: '2026',
+    medium: 'Mixed Media on Heavy Cotton Paper',
+    dimensions: '24 x 30 inches',
+    price: '$2,200',
+    status: 'sold',
+    description: 'An expressive burst of warm tones and sharp linework, conveying passion and structural urgency.',
+    imageUrl: '/vonder/Heat%20of%20the%20Moment.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3,
+  },
+  {
+    id: 'art-vonder-4',
+    title: 'I Love a Man Who Wears Pink',
+    year: '2026',
+    medium: 'Acrylic, Charcoal & Pastel on Canvas',
+    dimensions: '36 x 36 inches',
+    price: '$2,900',
+    status: 'available',
+    description: 'A bold, playful study in contrasts, juxtaposing soft rose tones with deep, grounding black strokes.',
+    imageUrl: '/vonder/I%20Love%20a%20Man%20Who%20Wears%20Pink.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 4,
+  },
+  {
+    id: 'art-vonder-5',
+    title: 'IMG_3296',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '16 x 20 inches',
+    price: '$850',
+    status: 'available',
+    description: 'A minimalist photographic study of light refractions on natural stone surfaces.',
+    imageUrl: '/vonder/IMG_3296.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 5,
+  },
+  {
+    id: 'art-vonder-6',
+    title: 'IMG_3600',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '16 x 20 inches',
+    price: '$850',
+    status: 'available',
+    description: 'A quiet contemplation of textured shadows playing across industrial concrete architecture.',
+    imageUrl: '/vonder/IMG_3600.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
+  },
+  {
+    id: 'art-vonder-7',
+    title: 'IMG_4685',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '16 x 20 inches',
+    price: '$850',
+    status: 'sold',
+    description: 'An intimate close-up detailing the fine micro-textures and fractures of raw alabaster.',
+    imageUrl: '/vonder/IMG_4685.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 7,
+  },
+  {
+    id: 'art-vonder-8',
+    title: 'IMG_4852',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '16 x 20 inches',
+    price: '$850',
+    status: 'available',
+    description: 'Captured light balancing on the edge of a sculpted marble geometry.',
+    imageUrl: '/vonder/IMG_4852.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 8,
+  },
+  {
+    id: 'art-vonder-9',
+    title: 'IMG_5476',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '24 x 24 inches',
+    price: '$1,200',
+    status: 'reserved',
+    description: 'A structural view of intersecting geometric planes illuminated by hard afternoon light.',
+    imageUrl: '/vonder/IMG_5476.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 9,
+  },
+  {
+    id: 'art-vonder-10',
+    title: 'IMG_5479',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '24 x 24 inches',
+    price: '$1,200',
+    status: 'available',
+    description: 'An elegant abstract capturing the boundary where sculpture meets space.',
+    imageUrl: '/vonder/IMG_5479.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 10,
   },
   {
-    id: 'art-2',
-    title: 'Monolith & Void',
-    year: '2024',
-    medium: 'Bronze on Travertine Pedestal',
-    dimensions: '34 x 16 x 16 inches',
-    price: '$9,500',
-    status: 'reserved',
-    description: 'A textured cast bronze structure that frames a central void, questioning the dialogue between matter and empty space.',
-    imageUrl: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?q=80&w=800',
-    collections: ['Sculpture', 'Bronze Works'],
-    isGallery: true,
-    isFeatured: true,
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 20,
-  },
-  {
-    id: 'art-3',
-    title: 'Tracing Silence, No. 4',
-    year: '2025',
-    medium: 'Charcoal & Raw Gesso on Linen',
-    dimensions: '48 x 48 inches',
-    price: '$3,800',
+    id: 'art-vonder-11',
+    title: 'IMG_5490',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '24 x 24 inches',
+    price: '$1,200',
     status: 'available',
-    description: 'Expressive sweeping gestures in pure charcoal powder, fixed over a textured raw gesso canvas. Part of the ongoing Silence series.',
-    imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800',
-    collections: ['Paintings', 'Monochrome'],
-    isGallery: true,
-    isFeatured: true,
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 30,
-  },
-  {
-    id: 'art-4',
-    title: 'Subterranean Light',
-    year: '2025',
-    medium: 'Oil, Earth Pigment & Marble Dust on Canvas',
-    dimensions: '60 x 72 inches',
-    price: '$12,000',
-    status: 'available',
-    description: 'A large-scale canvas layering natural ochres and marble dust to create a tactile surface that catches raking natural light.',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800',
-    collections: ['Paintings', 'Earth Pigments'],
-    isGallery: true,
-    isFeatured: true,
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 40,
-  },
-  {
-    id: 'art-5',
-    title: 'Form Study in White',
-    year: '2023',
-    medium: 'Plaster, Canvas & Wood Frame',
-    dimensions: '24 x 30 inches',
-    price: '$2,600',
-    status: 'sold',
-    description: 'A minimal plaster relief study capturing the shadows cast by soft organic ridges in midday light.',
-    imageUrl: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=800',
-    collections: ['Reliefs', 'Alabaster Series'],
+    description: 'A detailed study in contrast, observing soft atmospheric transitions over hard stone edges.',
+    imageUrl: '/vonder/IMG_5490.jpg',
+    collections: ['Variations in Joy'],
     isGallery: true,
     isFeatured: false,
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 50,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 11,
   },
   {
-    id: 'art-6',
-    title: 'Echoes of Ochre',
-    year: '2024',
-    medium: 'Mixed Media & Pigment on Cotton Paper',
+    id: 'art-vonder-12',
+    title: 'IMG_5520',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
     dimensions: '16 x 20 inches',
-    price: '$1,800',
+    price: '$850',
     status: 'available',
-    description: 'A delicate study of warm earth tones, mapping organic shapes on heavy French cotton paper.',
-    imageUrl: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?q=80&w=800',
-    collections: ['Works on Paper', 'Earth Pigments'],
+    description: 'A serene, low-contrast composition exploring the weight of absolute silence.',
+    imageUrl: '/vonder/IMG_5520.jpg',
+    collections: ['Variations in Joy'],
     isGallery: true,
     isFeatured: false,
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 60,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 12,
+  },
+  {
+    id: 'art-vonder-13',
+    title: 'IMG_5522',
+    year: '2026',
+    medium: 'Fine Art Archival Print',
+    dimensions: '16 x 20 inches',
+    price: '$850',
+    status: 'sold',
+    description: 'Interplay of natural wood grain and cast shadows under soft gallery lighting.',
+    imageUrl: '/vonder/IMG_5522.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 13,
+  },
+  {
+    id: 'art-vonder-14',
+    title: 'Love',
+    year: '2026',
+    medium: 'Acrylic, Oil & Gold Leaf on Canvas',
+    dimensions: '30 x 40 inches',
+    price: '$3,600',
+    status: 'available',
+    description: 'A rich, textured canvas reflecting warmth and connection through layered brushwork and delicate gold accents.',
+    imageUrl: '/vonder/Love.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 14,
+  },
+  {
+    id: 'art-vonder-15',
+    title: 'Sneaky Peek',
+    year: '2026',
+    medium: 'Mixed Media on Linen',
+    dimensions: '24 x 24 inches',
+    price: '$1,950',
+    status: 'available',
+    description: 'A playful, partially obscured composition inviting the viewer to look beyond the dominant foreground.',
+    imageUrl: '/vonder/Sneaky%20Peek.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 15,
+  },
+  {
+    id: 'art-vonder-16',
+    title: 'The Neighborhood',
+    year: '2026',
+    medium: 'Oil & Charcoal on Canvas',
+    dimensions: '36 x 48 inches',
+    price: '$4,100',
+    status: 'available',
+    description: 'An abstract spatial landscape exploring collective forms, community, and shared geometric borders.',
+    imageUrl: '/vonder/The%20Neighborhood.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 16,
+  },
+  {
+    id: 'art-vonder-17',
+    title: 'Whirlwind',
+    year: '2026',
+    medium: 'Mixed Media & Plaster Relief',
+    dimensions: '30 x 30 inches',
+    price: '$2,800',
+    status: 'available',
+    description: 'A dynamic plaster study evoking energy, circular motion, and structural change.',
+    imageUrl: '/vonder/Whirlwind.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: false,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 17,
+  },
+  {
+    id: 'art-vonder-18',
+    title: 'Winds of Change',
+    year: '2026',
+    medium: 'Acrylic & Pigment on Raw Linen',
+    dimensions: '40 x 50 inches',
+    price: '$4,800',
+    status: 'available',
+    description: 'Sweeping horizontal movements of paint that capture transient moments and emotional shifts.',
+    imageUrl: '/vonder/Winds%20of%20Change.jpg',
+    collections: ['Variations in Joy'],
+    isGallery: true,
+    isFeatured: true,
+    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 18,
   },
 ];
 
 const DEFAULT_COLLECTIONS = [
-  'Sculpture',
-  'Paintings',
-  'Reliefs',
-  'Works on Paper',
-  'Alabaster Series',
-  'Bronze Works',
-  'Monochrome',
-  'Earth Pigments',
+  'Variations in Joy',
 ];
 
 // Core Seed Function
 export const seedDatabaseIfEmpty = async (): Promise<void> => {
   const db = await openDB();
   
-  // 1. Seed Profile
-  const profileTx = db.transaction('profile', 'readwrite');
-  const profileStore = profileTx.objectStore('profile');
-  const hasProfile = await new Promise((resolve) => {
-    const req = profileStore.get('main');
-    req.onsuccess = () => resolve(!!req.result);
-    req.onerror = () => resolve(false);
-  });
-
-  if (!hasProfile) {
-    profileStore.put({ id: 'main', ...DEFAULT_PROFILE });
-  }
-  await new Promise((resolve) => { profileTx.oncomplete = resolve; });
-
-  // 2. Seed Collections
-  const collTx = db.transaction('collections', 'readwrite');
-  const collStore = collTx.objectStore('collections');
-  const hasCollections = await new Promise((resolve) => {
-    const req = collStore.get('main');
-    req.onsuccess = () => resolve(!!req.result);
-    req.onerror = () => resolve(false);
-  });
-
-  if (!hasCollections) {
-    collStore.put({ id: 'main', list: DEFAULT_COLLECTIONS });
-  }
-  await new Promise((resolve) => { collTx.oncomplete = resolve; });
-
-  // 3. Seed Artworks
-  const artTx = db.transaction('artworks', 'readwrite');
-  const artStore = artTx.objectStore('artworks');
-  const artworkCount = await new Promise<number>((resolve) => {
-    const req = artStore.count();
+  // 1. Check if we need to migrate/re-seed to the vonder collection
+  const checkProfileTx = db.transaction('profile', 'readonly');
+  const checkProfileStore = checkProfileTx.objectStore('profile');
+  const currentProfile = await new Promise<any>((resolve) => {
+    const req = checkProfileStore.get('main');
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => resolve(0);
+    req.onerror = () => resolve(null);
   });
+  await new Promise((resolve) => { checkProfileTx.oncomplete = resolve; });
 
-  if (artworkCount === 0) {
+  const needsVonderSeed = !currentProfile || currentProfile.seededVersion !== 'vonder_v3';
+
+  if (needsVonderSeed) {
+    // A. Clear artworks store to ensure all old pictures are deleted
+    const clearArtTx = db.transaction('artworks', 'readwrite');
+    clearArtTx.objectStore('artworks').clear();
+    await new Promise((resolve) => { clearArtTx.oncomplete = resolve; });
+
+    // B. Clear collections store to ensure all old collections are deleted
+    const clearCollTx = db.transaction('collections', 'readwrite');
+    clearCollTx.objectStore('collections').clear();
+    await new Promise((resolve) => { clearCollTx.oncomplete = resolve; });
+
+    // C. Write profile with seededVersion
+    const profileTx = db.transaction('profile', 'readwrite');
+    const newProfile = currentProfile 
+      ? { ...currentProfile, name: 'Vonder Gray', tagline: 'Contemporary Painter & Mixed-Media Artist', heroImage: '/vonder/Love.jpg', seededVersion: 'vonder_v3' } 
+      : { id: 'main', ...DEFAULT_PROFILE, seededVersion: 'vonder_v3' };
+    profileTx.objectStore('profile').put(newProfile);
+    await new Promise((resolve) => { profileTx.oncomplete = resolve; });
+
+    // D. Write new collections
+    const collTx = db.transaction('collections', 'readwrite');
+    collTx.objectStore('collections').put({ id: 'main', list: DEFAULT_COLLECTIONS });
+    await new Promise((resolve) => { collTx.oncomplete = resolve; });
+
+    // E. Write new artworks
+    const artTx = db.transaction('artworks', 'readwrite');
+    const artStore = artTx.objectStore('artworks');
     for (const art of DEFAULT_ARTWORKS) {
       artStore.put(art);
     }
+    await new Promise((resolve) => { artTx.oncomplete = resolve; });
+  } else {
+    // Standard safety fallback (in case DB exists but somehow got cleared partially)
+    // 1. Seed Profile
+    const profileTx = db.transaction('profile', 'readwrite');
+    const profileStore = profileTx.objectStore('profile');
+    const hasProfile = await new Promise((resolve) => {
+      const req = profileStore.get('main');
+      req.onsuccess = () => resolve(!!req.result);
+      req.onerror = () => resolve(false);
+    });
+    if (!hasProfile) {
+      profileStore.put({ id: 'main', ...DEFAULT_PROFILE, seededVersion: 'vonder_v3' });
+    }
+    await new Promise((resolve) => { profileTx.oncomplete = resolve; });
+
+    // 2. Seed Collections
+    const collTx = db.transaction('collections', 'readwrite');
+    const collStore = collTx.objectStore('collections');
+    const hasCollections = await new Promise((resolve) => {
+      const req = collStore.get('main');
+      req.onsuccess = () => resolve(!!req.result);
+      req.onerror = () => resolve(false);
+    });
+    if (!hasCollections) {
+      collStore.put({ id: 'main', list: DEFAULT_COLLECTIONS });
+    }
+    await new Promise((resolve) => { collTx.oncomplete = resolve; });
+
+    // 3. Seed Artworks
+    const artTx = db.transaction('artworks', 'readwrite');
+    const artStore = artTx.objectStore('artworks');
+    const artworkCount = await new Promise<number>((resolve) => {
+      const req = artStore.count();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(0);
+    });
+    if (artworkCount === 0) {
+      for (const art of DEFAULT_ARTWORKS) {
+        artStore.put(art);
+      }
+    }
+    await new Promise((resolve) => { artTx.oncomplete = resolve; });
   }
-  await new Promise((resolve) => { artTx.oncomplete = resolve; });
 };
 
 // Database APIs
@@ -254,7 +470,7 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('profile', 'readwrite');
     const store = tx.objectStore('profile');
-    const req = store.put({ id: 'main', ...profile });
+    const req = store.put({ id: 'main', ...profile, seededVersion: 'vonder_v3' });
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
@@ -364,3 +580,58 @@ export const deleteInquiry = async (id: string): Promise<void> => {
     req.onerror = () => reject(req.error);
   });
 };
+
+export interface PortfolioBackup {
+  version: string;
+  timestamp: number;
+  profile: Profile;
+  artworks: Artwork[];
+  collections: string[];
+}
+
+export const exportPortfolioData = async (): Promise<PortfolioBackup> => {
+  const profile = await getProfile();
+  const artworks = await getArtworks();
+  const collections = await getCollections();
+  
+  return {
+    version: 'artisthub_v1',
+    timestamp: Date.now(),
+    profile,
+    artworks,
+    collections
+  };
+};
+
+export const importPortfolioData = async (backup: PortfolioBackup): Promise<void> => {
+  if (backup.version !== 'artisthub_v1') {
+    throw new Error('Invalid backup file version.');
+  }
+  if (!backup.profile || !Array.isArray(backup.artworks) || !Array.isArray(backup.collections)) {
+    throw new Error('Invalid backup data structure.');
+  }
+
+  const db = await openDB();
+
+  // 1. Clear existing profile and write new one
+  const profileTx = db.transaction('profile', 'readwrite');
+  profileTx.objectStore('profile').clear();
+  profileTx.objectStore('profile').put({ id: 'main', ...backup.profile, seededVersion: 'vonder_v3' });
+  await new Promise((resolve) => { profileTx.oncomplete = resolve; });
+
+  // 2. Clear existing artworks and write new ones
+  const artTx = db.transaction('artworks', 'readwrite');
+  artTx.objectStore('artworks').clear();
+  const artStore = artTx.objectStore('artworks');
+  for (const art of backup.artworks) {
+    artStore.put(art);
+  }
+  await new Promise((resolve) => { artTx.oncomplete = resolve; });
+
+  // 3. Clear existing collections and write new ones
+  const collTx = db.transaction('collections', 'readwrite');
+  collTx.objectStore('collections').clear();
+  collTx.objectStore('collections').put({ id: 'main', list: backup.collections });
+  await new Promise((resolve) => { collTx.oncomplete = resolve; });
+};
+

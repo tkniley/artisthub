@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, Edit2, Trash2, Tag, BookOpen, Layers, Check, 
-  Trash, MessageSquare, AlertCircle, FileText, Upload, LogOut, ChevronRight, Lock
+  Trash, MessageSquare, AlertCircle, FileText, Upload, LogOut, ChevronRight, Lock, Download
 } from 'lucide-react';
 import { 
   getProfile, saveProfile, getArtworks, saveArtwork, 
   deleteArtwork, getCollections, saveCollections, getInquiries, 
-  deleteInquiry, saveInquiry 
+  deleteInquiry, saveInquiry, exportPortfolioData, importPortfolioData
 } from '../db';
 import type { Profile, Artwork, CVSection, CVItem, Inquiry } from '../types';
 
@@ -27,7 +27,7 @@ export const StudioPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
 
   // Page Tab state
-  const [activeTab, setActiveTab] = useState<'overview' | 'artworks' | 'collections' | 'pages' | 'inquiries'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'artworks' | 'collections' | 'pages' | 'inquiries' | 'system'>('overview');
 
   // Core data states
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -431,6 +431,57 @@ export const StudioPage: React.FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const data = await exportPortfolioData();
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(data, null, 2)
+      )}`;
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', jsonString);
+      
+      const artistSlug = data.profile.name.toLowerCase().replace(/\s+/g, '_');
+      const dateString = new Date().toISOString().split('T')[0];
+      downloadAnchor.setAttribute(
+        'download',
+        `artisthub_backup_${artistSlug}_${dateString}.json`
+      );
+      
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err) {
+      alert('Failed to export portfolio data.');
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const confirmOverwrite = window.confirm(
+      'Are you absolutely sure you want to import this portfolio backup? This will completely overwrite all current artworks, collections, biography, and CV in this browser!'
+    );
+    if (!confirmOverwrite) {
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        await importPortfolioData(json);
+        alert('Portfolio data successfully imported! The database has been updated.');
+        await fetchData();
+      } catch (err: any) {
+        alert(`Failed to import data: ${err.message || 'Invalid format'}`);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-art-bg dark:bg-art-darkBg">
@@ -705,6 +756,19 @@ export const StudioPage: React.FC = () => {
                   {unreadInquiries} new
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('system'); resetArtworkForm(); }}
+              id="studio-tab-system"
+              className={`flex items-center space-x-3 px-4 py-3.5 text-xs font-semibold tracking-widest uppercase text-left transition-all duration-300 border-l ${
+                activeTab === 'system'
+                  ? 'border-art-accent text-art-accent bg-art-card/65 dark:bg-art-darkCard/65 pl-5'
+                  : 'border-transparent text-art-dark/60 dark:text-art-bg/60 hover:text-art-dark dark:hover:text-art-bg pl-4'
+              }`}
+            >
+              <Download size={14} />
+              <span>Backup & Transfer</span>
             </button>
           </nav>
 
@@ -1597,17 +1661,17 @@ export const StudioPage: React.FC = () => {
                           
                           <div className="flex space-x-3">
                             <button
-                              onClick={() => handleInquiryToggleRead(inq)}
-                              id={`inq-read-${inq.id}`}
-                              className="text-art-accent hover:underline text-[10px] uppercase tracking-widest font-semibold"
+                               onClick={() => handleInquiryToggleRead(inq)}
+                               id={`inq-read-${inq.id}`}
+                               className="text-art-accent hover:underline text-[10px] uppercase tracking-widest font-semibold"
                             >
                               Mark {inq.status === 'unread' ? 'Read' : 'Unread'}
                             </button>
                             <span className="text-art-border">|</span>
                             <button
-                              onClick={() => handleInquiryDelete(inq.id)}
-                              id={`inq-delete-${inq.id}`}
-                              className="text-red-500 hover:underline text-[10px] uppercase tracking-widest font-semibold"
+                               onClick={() => handleInquiryDelete(inq.id)}
+                               id={`inq-delete-${inq.id}`}
+                               className="text-red-500 hover:underline text-[10px] uppercase tracking-widest font-semibold"
                             >
                               Delete Log
                             </button>
@@ -1618,6 +1682,75 @@ export const StudioPage: React.FC = () => {
                     ))}
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {/* 6. TAB: SYSTEM / BACKUP */}
+            {activeTab === 'system' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-serif mb-2">Backup & Cloud Transfer</h2>
+                  <p className="text-xs text-art-muted dark:text-art-darkMuted font-sans">
+                    Transfer your entire portfolio data between your local computer and your Cloudflare live website.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Export Card */}
+                  <div className="bg-art-card dark:bg-art-darkCard border border-art-border/40 p-6 flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-serif">1. Export Portfolio Backup</h3>
+                      <p className="text-xs text-art-muted leading-relaxed">
+                        Download a single backup file (`.json`) containing all your biography, CV, collections list, and high-definition artworks with their image files. Keep this file safe as a personal backup or to copy it to your live website!
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleExport}
+                      className="w-full bg-art-dark dark:bg-art-bg text-art-bg dark:text-art-dark hover:bg-art-accent hover:text-white dark:hover:bg-art-accent dark:hover:text-white py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer"
+                    >
+                      Download Backup File
+                    </button>
+                  </div>
+
+                  {/* Import Card */}
+                  <div className="bg-art-card dark:bg-art-darkCard border border-art-border/40 p-6 flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-serif">2. Import / Restore Backup</h3>
+                      <p className="text-xs text-art-muted leading-relaxed">
+                        Upload a previously exported backup file (`.json`). This will completely overwrite your current browser's database with the profile settings and artworks from the backup file. Perfect for publishing your local work online!
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      <input
+                        type="file"
+                        accept=".json"
+                        id="import-backup-file"
+                        onChange={handleImport}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => document.getElementById('import-backup-file')?.click()}
+                        className="w-full border border-art-border dark:border-art-darkBorder text-art-dark dark:text-art-bg hover:border-art-accent hover:text-art-accent py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer"
+                      >
+                        Select & Upload Backup
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 p-4 border border-amber-500/20 text-xs flex items-start space-x-3">
+                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold mb-1">How to Deploy & Synchronize Your Changes:</p>
+                    <ol className="list-decimal list-inside space-y-1.5 mt-1.5 leading-relaxed font-sans">
+                      <li>Make all your changes, add new pictures, and write your CV on this local dashboard.</li>
+                      <li>Go to this **Backup & Transfer** tab, click **Download Backup File** and save the JSON file to your computer.</li>
+                      <li>Upload your project code to **Cloudflare** (or build/push changes to your repository).</li>
+                      <li>Open your live Cloudflare website, navigate to the private **Studio** dashboard (using the key shortcut `Ctrl + Shift + S` or triple-clicking the copyright text), and log in with your passcode.</li>
+                      <li>Go to the **Backup & Transfer** tab on the live Cloudflare site, select the JSON file you downloaded in Step 2, and upload it. **Your live site is now fully updated and live!**</li>
+                    </ol>
+                  </div>
+                </div>
               </motion.div>
             )}
 

@@ -35,6 +35,7 @@ export interface Profile {
   bioText: string;
   portraitImage: string;
   cv: CVSection[];
+  seededVersion?: string;
 }
 
 export interface Inquiry {

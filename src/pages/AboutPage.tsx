@@ -81,7 +81,7 @@ export const AboutPage: React.FC = () => {
               <img
                 src={profile.portraitImage}
                 alt={profile.name}
-                className="w-full h-full object-cover grayscale brightness-95 group-hover:grayscale-0 transition-all duration-[1.5s]"
+                className="w-full h-full object-cover brightness-95 transition-all duration-[1.5s]"
               />
               <div className="absolute inset-0 border-[8px] border-art-bg/20 dark:border-art-darkBg/20 pointer-events-none" />
             </div>

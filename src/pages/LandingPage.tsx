@@ -78,7 +78,7 @@ export const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-xs md:text-sm uppercase tracking-extra text-art-muted dark:text-art-darkMuted font-sans mb-8 max-w-xl"
+            className="font-script text-4xl md:text-6xl text-[#db2777] dark:text-[#ec4899] mb-8 whitespace-nowrap normal-case tracking-normal drop-shadow-sm select-none"
           >
             {profile.tagline}
           </motion.p>
@@ -171,7 +171,7 @@ export const LandingPage: React.FC = () => {
                   <img
                     src={work.imageUrl}
                     alt={work.title}
-                    className="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-700"
                     loading="lazy"
                   />
                   {/* Subtle hover overlay details */}

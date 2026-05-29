@@ -219,7 +219,7 @@ export const GalleryPage: React.FC = () => {
                         <img
                           src={work.imageUrl}
                           alt={work.title}
-                          className="w-full h-full object-cover grayscale opacity-90 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-700"
                           loading="lazy"
                         />
                         
