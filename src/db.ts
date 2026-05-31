@@ -5,22 +5,53 @@ import staticProfile from '../data/profile.json';
 import staticArtworks from '../data/artworks.json';
 import staticCollections from '../data/collections.json';
 
-// ─── In-Memory State ───────────────────────────────────────────────────────
-// These hold the "live" working copies. On first load they clone the static
-// JSON so the originals are never mutated.  Studio edits update these in
-// memory so the artist gets instant preview.  To persist changes permanently,
-// the artist exports a site-data.json and drops it back into /data/.
+// ─── localStorage Keys ─────────────────────────────────────────────────────
+const LS_PROFILE = 'artisthub_profile';
+const LS_ARTWORKS = 'artisthub_artworks';
+const LS_COLLECTIONS = 'artisthub_collections';
+const LS_INQUIRIES = 'artisthub_inquiries';
 
-let currentProfile: Profile = { ...staticProfile };
-let currentArtworks: Artwork[] = staticArtworks.map((a) => ({ ...a } as Artwork));
-let currentCollections: string[] = [...staticCollections];
-let currentInquiries: Inquiry[] = [];
+// ─── localStorage Helpers ──────────────────────────────────────────────────
+function lsGet<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw) as T;
+  } catch {
+    // corrupted — ignore and fall back to static
+  }
+  return null;
+}
 
-// Track whether the artist has made in-memory edits (for the "unsaved" badge)
-let _hasUnsavedChanges = false;
+function lsSet(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // quota exceeded or private browsing — silent fail
+  }
+}
+
+function lsRemove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // silent
+  }
+}
+
+// ─── In-Memory State (hydrated from localStorage → static JSON fallback) ──
+// On first load: if localStorage has saved data, use it.
+// Otherwise fall back to the static JSON bundled at build time.
+// Every save* call persists to BOTH in-memory AND localStorage.
+
+let currentProfile: Profile = lsGet<Profile>(LS_PROFILE) ?? { ...staticProfile };
+let currentArtworks: Artwork[] = lsGet<Artwork[]>(LS_ARTWORKS) ?? staticArtworks.map((a) => ({ ...a } as Artwork));
+let currentCollections: string[] = lsGet<string[]>(LS_COLLECTIONS) ?? [...staticCollections];
+let currentInquiries: Inquiry[] = lsGet<Inquiry[]>(LS_INQUIRIES) ?? [];
+
+// Track whether localStorage state differs from the static build data
+let _hasUnsavedChanges = lsGet<Profile>(LS_PROFILE) !== null;
 
 // ─── Change Listeners ──────────────────────────────────────────────────────
-// Components can subscribe to be notified when data changes in memory.
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
 
@@ -33,7 +64,34 @@ const notifyListeners = () => {
   listeners.forEach((fn) => fn());
 };
 
-// ─── Public API — identical signatures to the old IndexedDB layer ──────────
+// ─── Local Filesystem Autosave (Development Only) ───────────────────────────
+async function syncToDisk(): Promise<void> {
+  if (import.meta.env.DEV) {
+    try {
+      const data = {
+        profile: currentProfile,
+        artworks: currentArtworks,
+        collections: currentCollections,
+      };
+      const res = await fetch('/api/save-portfolio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        console.error('Failed to autosave changes to local filesystem.');
+      } else {
+        console.log('Autosaved changes to local data/*.json files successfully!');
+      }
+    } catch (err) {
+      console.error('Error autosaving to local filesystem:', err);
+    }
+  }
+}
+
+// ─── Public API — identical signatures to the old layer ────────────────────
 
 export const getProfile = async (): Promise<Profile> => {
   return { ...currentProfile };
@@ -41,12 +99,13 @@ export const getProfile = async (): Promise<Profile> => {
 
 export const saveProfile = async (profile: Profile): Promise<void> => {
   currentProfile = { ...profile };
+  lsSet(LS_PROFILE, currentProfile);
   _hasUnsavedChanges = true;
   notifyListeners();
+  await syncToDisk();
 };
 
 export const getArtworks = async (): Promise<Artwork[]> => {
-  // Return sorted by createdAt descending (highest = newest)
   return [...currentArtworks].sort((a, b) => b.createdAt - a.createdAt);
 };
 
@@ -57,14 +116,18 @@ export const saveArtwork = async (artwork: Artwork): Promise<void> => {
   } else {
     currentArtworks.push({ ...artwork });
   }
+  lsSet(LS_ARTWORKS, currentArtworks);
   _hasUnsavedChanges = true;
   notifyListeners();
+  await syncToDisk();
 };
 
 export const deleteArtwork = async (id: string): Promise<void> => {
   currentArtworks = currentArtworks.filter((a) => a.id !== id);
+  lsSet(LS_ARTWORKS, currentArtworks);
   _hasUnsavedChanges = true;
   notifyListeners();
+  await syncToDisk();
 };
 
 export const getCollections = async (): Promise<string[]> => {
@@ -73,8 +136,10 @@ export const getCollections = async (): Promise<string[]> => {
 
 export const saveCollections = async (collections: string[]): Promise<void> => {
   currentCollections = [...collections];
+  lsSet(LS_COLLECTIONS, currentCollections);
   _hasUnsavedChanges = true;
   notifyListeners();
+  await syncToDisk();
 };
 
 export const getInquiries = async (): Promise<Inquiry[]> => {
@@ -88,10 +153,12 @@ export const saveInquiry = async (inquiry: Inquiry): Promise<void> => {
   } else {
     currentInquiries.push({ ...inquiry });
   }
+  lsSet(LS_INQUIRIES, currentInquiries);
 };
 
 export const deleteInquiry = async (id: string): Promise<void> => {
   currentInquiries = currentInquiries.filter((i) => i.id !== id);
+  lsSet(LS_INQUIRIES, currentInquiries);
 };
 
 // ─── Export / Import (Publish workflow) ────────────────────────────────────
@@ -104,7 +171,7 @@ export interface PortfolioBackup {
   collections: string[];
 }
 
-/** Build a full snapshot of the current in-memory state for download. */
+/** Build a full snapshot of the current state for download. */
 export const exportPortfolioData = async (): Promise<PortfolioBackup> => {
   return {
     version: 'artisthub_v2',
@@ -115,7 +182,7 @@ export const exportPortfolioData = async (): Promise<PortfolioBackup> => {
   };
 };
 
-/** Load a backup into memory so the artist can preview it, then re-export. */
+/** Load a backup into memory + localStorage. Persists across refreshes. */
 export const importPortfolioData = async (backup: PortfolioBackup): Promise<void> => {
   if (!backup.version || !backup.version.startsWith('artisthub_v')) {
     throw new Error('Invalid backup file — missing or unrecognised version.');
@@ -127,27 +194,40 @@ export const importPortfolioData = async (backup: PortfolioBackup): Promise<void
   currentProfile = { ...backup.profile };
   currentArtworks = backup.artworks.map((a) => ({ ...a } as Artwork));
   currentCollections = [...backup.collections];
+
+  // Persist to localStorage so data survives refresh
+  lsSet(LS_PROFILE, currentProfile);
+  lsSet(LS_ARTWORKS, currentArtworks);
+  lsSet(LS_COLLECTIONS, currentCollections);
+
   _hasUnsavedChanges = true;
   notifyListeners();
+  await syncToDisk();
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/** Whether in-memory state differs from the static build data. */
+/** Whether localStorage state differs from the static build data. */
 export const hasUnsavedChanges = (): boolean => _hasUnsavedChanges;
 
-/** Reset in-memory state back to the static build data (undo all edits). */
+/** Reset everything back to the static build data and clear localStorage. */
 export const resetToStaticData = (): void => {
   currentProfile = { ...staticProfile };
   currentArtworks = staticArtworks.map((a) => ({ ...a } as Artwork));
   currentCollections = [...staticCollections];
   currentInquiries = [];
+
+  lsRemove(LS_PROFILE);
+  lsRemove(LS_ARTWORKS);
+  lsRemove(LS_COLLECTIONS);
+  lsRemove(LS_INQUIRIES);
+
   _hasUnsavedChanges = false;
   notifyListeners();
+  syncToDisk(); // Non-blocking sync to reset files on disk as well
 };
 
-// Backwards-compat: the old code called seedDatabaseIfEmpty() on startup.
-// This is now a no-op since data comes from static JSON.
+// Backwards-compat no-op
 export const seedDatabaseIfEmpty = async (): Promise<void> => {
-  // no-op
+  // no-op — data comes from static JSON + localStorage
 };
