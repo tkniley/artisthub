@@ -1,0 +1,36 @@
+{
+  "name": "Vonder Gray",
+  "tagline": "Contemporary Painter & Mixed-Media Artist",
+  "philosophy": "Art is the silent geometry of the soul, rendered in stone, ink, and light. My work explores the spaces between form and nothingness, capturing the quiet weight of existence.",
+  "heroImage": "/vonder/Love.jpg",
+  "bioText": "Vonder Gray (b. 1988) is an American contemporary painter and mixed-media artist based in Denver, Colorado. Working out of her studio in the historic art districts, Vonder creates highly energetic, layered abstract canvases that contemplate space, void, and stillness.\n\nShe is best known for her bold use of fluid pigments, heavy acrylic layering, fixed charcoal gestures, and delicate gold accents. Her work has been shown in prominent contemporary spaces across the West, including regular installations at Rolo Gallery. She contemplates the boundary where raw feeling meets deliberate creative expression.",
+  "portraitImage": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600",
+  "cv": [
+    {
+      "id": "cv-1",
+      "category": "Selected Solo Exhibitions",
+      "items": [
+        { "id": "cvi-1", "year": "2026", "title": "Variations in Joy", "detail": "Rolo Gallery, Denver, CO" },
+        { "id": "cvi-2", "year": "2025", "title": "The Weight of Absence", "detail": "Galerie Alabaster, Paris, France" },
+        { "id": "cvi-3", "year": "2024", "title": "Ethereal Geometries", "detail": "Contemporary Art Center, Milan, Italy" }
+      ]
+    },
+    {
+      "id": "cv-2",
+      "category": "Selected Group Exhibitions",
+      "items": [
+        { "id": "cvi-4", "year": "2025", "title": "Echoes of Stone", "detail": "Carrara Biennale, Carrara, Italy" },
+        { "id": "cvi-5", "year": "2023", "title": "Tactile Realism", "detail": "Museum of Fine Arts, Zurich, Switzerland" },
+        { "id": "cvi-6", "year": "2021", "title": "New Monochromes", "detail": "Metropolitan Museum of Art (Sackler Gallery), New York, USA" }
+      ]
+    },
+    {
+      "id": "cv-3",
+      "category": "Education & Residencies",
+      "items": [
+        { "id": "cvi-7", "year": "2023", "title": "Villa Medici Residency", "detail": "French Academy in Rome, Italy" },
+        { "id": "cvi-8", "year": "2016", "title": "Master of Fine Arts (Sculpture)", "detail": "Accademia di Belle Arti di Firenze, Italy" }
+      ]
+    }
+  ]
+}

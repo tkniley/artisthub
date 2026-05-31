@@ -7,7 +7,7 @@ import { LandingPage } from './pages/LandingPage';
 import { AboutPage } from './pages/AboutPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { StudioPage } from './pages/StudioPage';
-import { getProfile } from './db';
+import { getProfile, subscribe } from './db';
 import type { Profile } from './types';
 
 // Scroll to top on route change to make page transitions feel highly polished
@@ -71,7 +71,8 @@ const AnimatedRoutes: React.FC<{ artistName: string }> = ({ artistName }) => {
 
 export const App: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
-    // Fetch profile to get Artist Name globally
+
+  // Fetch profile on mount
   useEffect(() => {
     const fetchArtistName = async () => {
       try {
@@ -84,23 +85,20 @@ export const App: React.FC = () => {
     fetchArtistName();
   }, []);
 
-  // Keep track of CMS edits in current tab sessions by running an interval or check
+  // Re-fetch when data changes in memory (e.g. Studio edits)
   useEffect(() => {
-    // Poll local DB lightly every 2 seconds to check if name changed in CMS and update instantly
-    const interval = setInterval(async () => {
+    const unsubscribe = subscribe(async () => {
       try {
         const p = await getProfile();
-        if (p && p.name !== profile?.name) {
-          setProfile(p);
-        }
+        setProfile(p);
       } catch (err) {
         // quiet
       }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [profile]);
+    });
+    return unsubscribe;
+  }, []);
 
-  const artistName = profile?.name || 'Eleonora Vance';
+  const artistName = profile?.name || 'Vonder Gray';
 
   return (
     <Router>
@@ -111,3 +109,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

@@ -7,7 +7,8 @@ import {
 import { 
   getProfile, saveProfile, getArtworks, saveArtwork, 
   deleteArtwork, getCollections, saveCollections, getInquiries, 
-  deleteInquiry, saveInquiry, exportPortfolioData, importPortfolioData
+  deleteInquiry, saveInquiry, exportPortfolioData, importPortfolioData,
+  hasUnsavedChanges, resetToStaticData
 } from '../db';
 import type { Profile, Artwork, CVSection, CVItem, Inquiry } from '../types';
 
@@ -440,11 +441,10 @@ export const StudioPage: React.FC = () => {
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', jsonString);
       
-      const artistSlug = data.profile.name.toLowerCase().replace(/\s+/g, '_');
       const dateString = new Date().toISOString().split('T')[0];
       downloadAnchor.setAttribute(
         'download',
-        `artisthub_backup_${artistSlug}_${dateString}.json`
+        `site-data_${dateString}.json`
       );
       
       document.body.appendChild(downloadAnchor);
@@ -460,7 +460,7 @@ export const StudioPage: React.FC = () => {
     if (!file) return;
 
     const confirmOverwrite = window.confirm(
-      'Are you absolutely sure you want to import this portfolio backup? This will completely overwrite all current artworks, collections, biography, and CV in this browser!'
+      'Import this site data file? This will replace all current content in the editor so you can preview it.'
     );
     if (!confirmOverwrite) {
       e.target.value = '';
@@ -472,7 +472,7 @@ export const StudioPage: React.FC = () => {
       try {
         const json = JSON.parse(event.target?.result as string);
         await importPortfolioData(json);
-        alert('Portfolio data successfully imported! The database has been updated.');
+        alert('Site data imported successfully! You can now preview the changes across all pages.');
         await fetchData();
       } catch (err: any) {
         alert(`Failed to import data: ${err.message || 'Invalid format'}`);
@@ -480,6 +480,12 @@ export const StudioPage: React.FC = () => {
     };
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  const handleReset = () => {
+    if (!window.confirm('Reset all content back to the published version? Any unsaved edits will be lost.')) return;
+    resetToStaticData();
+    fetchData();
   };
 
   if (loading) {
@@ -761,14 +767,21 @@ export const StudioPage: React.FC = () => {
             <button
               onClick={() => { setActiveTab('system'); resetArtworkForm(); }}
               id="studio-tab-system"
-              className={`flex items-center space-x-3 px-4 py-3.5 text-xs font-semibold tracking-widest uppercase text-left transition-all duration-300 border-l ${
+              className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold tracking-widest uppercase text-left transition-all duration-300 border-l ${
                 activeTab === 'system'
                   ? 'border-art-accent text-art-accent bg-art-card/65 dark:bg-art-darkCard/65 pl-5'
                   : 'border-transparent text-art-dark/60 dark:text-art-bg/60 hover:text-art-dark dark:hover:text-art-bg pl-4'
               }`}
             >
-              <Download size={14} />
-              <span>Backup & Transfer</span>
+              <div className="flex items-center space-x-3">
+                <Upload size={14} />
+                <span>Publish & Backup</span>
+              </div>
+              {hasUnsavedChanges() && (
+                <span className="bg-amber-500 text-white font-sans text-[9px] px-2 py-0.5 rounded-full select-none">
+                  edited
+                </span>
+              )}
             </button>
           </nav>
 
@@ -1685,39 +1698,56 @@ export const StudioPage: React.FC = () => {
               </motion.div>
             )}
 
-            {/* 6. TAB: SYSTEM / BACKUP */}
+            {/* 6. TAB: PUBLISH & BACKUP */}
             {activeTab === 'system' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-serif mb-2">Backup & Cloud Transfer</h2>
+                  <h2 className="text-2xl font-serif mb-2">Publish & Backup</h2>
                   <p className="text-xs text-art-muted dark:text-art-darkMuted font-sans">
-                    Transfer your entire portfolio data between your local computer and your Cloudflare live website.
+                    Download your site data, back it up, or restore from a previous export.
                   </p>
                 </div>
 
+                {/* Status Banner */}
+                {hasUnsavedChanges() && (
+                  <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 p-4 border border-amber-500/20 text-xs flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <AlertCircle size={16} className="flex-shrink-0" />
+                      <span className="font-semibold">You have unpublished changes in this session.</span>
+                    </div>
+                    <button
+                      onClick={handleReset}
+                      className="text-amber-700 dark:text-amber-400 underline hover:no-underline text-xs uppercase tracking-widest font-semibold cursor-pointer"
+                    >
+                      Discard Edits
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Export Card */}
+                  {/* Export / Publish Card */}
                   <div className="bg-art-card dark:bg-art-darkCard border border-art-border/40 p-6 flex flex-col justify-between space-y-6">
                     <div className="space-y-3">
-                      <h3 className="text-lg font-serif">1. Export Portfolio Backup</h3>
+                      <h3 className="text-lg font-serif">Download Site Data</h3>
                       <p className="text-xs text-art-muted leading-relaxed">
-                        Download a single backup file (`.json`) containing all your biography, CV, collections list, and high-definition artworks with their image files. Keep this file safe as a personal backup or to copy it to your live website!
+                        Export all your current content — biography, CV, artworks, and collections — as a single <code className="bg-art-border/30 px-1 py-0.5">.json</code> file. Use this to publish updates or keep as a backup.
                       </p>
                     </div>
                     <button
                       onClick={handleExport}
-                      className="w-full bg-art-dark dark:bg-art-bg text-art-bg dark:text-art-dark hover:bg-art-accent hover:text-white dark:hover:bg-art-accent dark:hover:text-white py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer"
+                      className="w-full bg-art-dark dark:bg-art-bg text-art-bg dark:text-art-dark hover:bg-art-accent hover:text-white dark:hover:bg-art-accent dark:hover:text-white py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer flex items-center justify-center space-x-2"
                     >
-                      Download Backup File
+                      <Download size={14} />
+                      <span>Download Site Data</span>
                     </button>
                   </div>
 
-                  {/* Import Card */}
+                  {/* Import / Restore Card */}
                   <div className="bg-art-card dark:bg-art-darkCard border border-art-border/40 p-6 flex flex-col justify-between space-y-6">
                     <div className="space-y-3">
-                      <h3 className="text-lg font-serif">2. Import / Restore Backup</h3>
+                      <h3 className="text-lg font-serif">Import / Restore</h3>
                       <p className="text-xs text-art-muted leading-relaxed">
-                        Upload a previously exported backup file (`.json`). This will completely overwrite your current browser's database with the profile settings and artworks from the backup file. Perfect for publishing your local work online!
+                        Load a previously downloaded <code className="bg-art-border/30 px-1 py-0.5">.json</code> data file into the editor. Great for restoring a backup or previewing data before publishing.
                       </p>
                     </div>
                     <div className="space-y-4">
@@ -1730,26 +1760,24 @@ export const StudioPage: React.FC = () => {
                       />
                       <button
                         onClick={() => document.getElementById('import-backup-file')?.click()}
-                        className="w-full border border-art-border dark:border-art-darkBorder text-art-dark dark:text-art-bg hover:border-art-accent hover:text-art-accent py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer"
+                        className="w-full border border-art-border dark:border-art-darkBorder text-art-dark dark:text-art-bg hover:border-art-accent hover:text-art-accent py-3 text-xs uppercase tracking-widest font-semibold transition-all duration-300 cursor-pointer flex items-center justify-center space-x-2"
                       >
-                        Select & Upload Backup
+                        <Upload size={14} />
+                        <span>Select & Import File</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 p-4 border border-amber-500/20 text-xs flex items-start space-x-3">
-                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold mb-1">How to Deploy & Synchronize Your Changes:</p>
-                    <ol className="list-decimal list-inside space-y-1.5 mt-1.5 leading-relaxed font-sans">
-                      <li>Make all your changes, add new pictures, and write your CV on this local dashboard.</li>
-                      <li>Go to this **Backup & Transfer** tab, click **Download Backup File** and save the JSON file to your computer.</li>
-                      <li>Upload your project code to **Cloudflare** (or build/push changes to your repository).</li>
-                      <li>Open your live Cloudflare website, navigate to the private **Studio** dashboard (using the key shortcut `Ctrl + Shift + S` or triple-clicking the copyright text), and log in with your passcode.</li>
-                      <li>Go to the **Backup & Transfer** tab on the live Cloudflare site, select the JSON file you downloaded in Step 2, and upload it. **Your live site is now fully updated and live!**</li>
-                    </ol>
-                  </div>
+                {/* How-To Guide */}
+                <div className="bg-art-card/50 dark:bg-art-darkCard/50 border border-art-border/30 dark:border-art-darkBorder/30 p-6 text-xs space-y-4">
+                  <p className="font-serif text-base">How to Publish Changes to Your Live Site</p>
+                  <ol className="list-decimal list-inside space-y-3 leading-relaxed font-sans text-art-muted dark:text-art-darkMuted">
+                    <li><span className="text-art-dark dark:text-art-bg font-medium">Make your edits</span> — Update your biography, add artworks, manage collections using the tabs on the left.</li>
+                    <li><span className="text-art-dark dark:text-art-bg font-medium">Download your site data</span> — Click "Download Site Data" above to save a <code className="bg-art-border/30 px-1 py-0.5">site-data.json</code> file.</li>
+                    <li><span className="text-art-dark dark:text-art-bg font-medium">Replace the data files</span> — Copy the downloaded JSON content into the <code className="bg-art-border/30 px-1 py-0.5">data/</code> folder in your project (split into <code className="bg-art-border/30 px-1 py-0.5">profile.json</code>, <code className="bg-art-border/30 px-1 py-0.5">artworks.json</code>, and <code className="bg-art-border/30 px-1 py-0.5">collections.json</code>).</li>
+                    <li><span className="text-art-dark dark:text-art-bg font-medium">Push to Cloudflare</span> — Commit and push your changes. Cloudflare Pages will auto-redeploy with your updated content.</li>
+                  </ol>
                 </div>
               </motion.div>
             )}
