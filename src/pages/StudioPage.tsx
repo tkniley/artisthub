@@ -164,7 +164,8 @@ export const StudioPage: React.FC = () => {
             <h1 className="text-4xl sm:text-5xl font-serif">{profile.name}</h1>
             <p className="text-lg text-art-muted mt-3 max-w-xl">
               Add and edit paintings here. When you save, your website updates immediately — no
-              special steps needed.
+              special steps needed. Bookmark this page so you can open Studio later (it is hidden
+              from the public menu).
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

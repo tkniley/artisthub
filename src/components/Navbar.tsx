@@ -37,11 +37,11 @@ export const Navbar: React.FC<NavbarProps> = ({ artistName }) => {
     }
   };
 
+  // Studio is intentionally omitted from public nav — bookmark /studio or use the hidden entry.
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Gallery', path: '/gallery' },
     { name: 'About', path: '/about' },
-    { name: 'Studio', path: '/studio' },
   ];
 
   return (

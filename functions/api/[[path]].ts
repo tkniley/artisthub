@@ -1,5 +1,12 @@
 import type { Env } from '../types';
-import { createSessionToken, requireAuth, verifyPasscode } from '../_shared/auth';
+import {
+  assertAuthNotRateLimited,
+  clearAuthFailures,
+  createSessionToken,
+  recordAuthFailure,
+  requireAuth,
+  verifyPasscode,
+} from '../_shared/auth';
 import {
   addCollection,
   deleteArtwork,
@@ -42,11 +49,18 @@ async function handle(context: EventContext<Env, 'path', unknown>): Promise<Resp
 
     // POST /api/auth
     if (resource === 'auth' && method === 'POST') {
+      const limited = await assertAuthNotRateLimited(request, env);
+      if (limited) return limited;
+
       const body = (await request.json()) as { passcode?: string; rememberMe?: boolean };
       const passcode = (body.passcode || '').trim();
       if (!passcode) return error('Enter your studio passcode.', 400);
       const ok = await verifyPasscode(env, passcode);
-      if (!ok) return error('That passcode is incorrect.', 401);
+      if (!ok) {
+        await recordAuthFailure(request, env);
+        return error('That passcode is incorrect.', 401);
+      }
+      await clearAuthFailures(request, env);
       const token = await createSessionToken(env, !!body.rememberMe);
       return json({ token });
     }

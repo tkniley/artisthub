@@ -40,6 +40,72 @@ export async function verifyPasscode(env: Env, passcode: string): Promise<boolea
   return hashed === expected;
 }
 
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_MAX_FAILS = 8;
+
+function clientIp(request: Request): string {
+  return (
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
+    'unknown'
+  );
+}
+
+/** Returns an error Response if this IP is temporarily locked out. */
+export async function assertAuthNotRateLimited(
+  request: Request,
+  env: Env
+): Promise<Response | null> {
+  const ip = clientIp(request);
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    'SELECT fails, window_start FROM auth_attempts WHERE ip = ?'
+  )
+    .bind(ip)
+    .first<{ fails: number; window_start: number }>();
+
+  if (!row) return null;
+  if (now - row.window_start > AUTH_WINDOW_MS) return null;
+  if (row.fails < AUTH_MAX_FAILS) return null;
+
+  const minutes = Math.max(1, Math.ceil((AUTH_WINDOW_MS - (now - row.window_start)) / 60000));
+  return new Response(
+    JSON.stringify({
+      error: `Too many incorrect attempts. Try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+    }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
+export async function recordAuthFailure(request: Request, env: Env): Promise<void> {
+  const ip = clientIp(request);
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    'SELECT fails, window_start FROM auth_attempts WHERE ip = ?'
+  )
+    .bind(ip)
+    .first<{ fails: number; window_start: number }>();
+
+  if (!row || now - row.window_start > AUTH_WINDOW_MS) {
+    await env.DB.prepare(
+      `INSERT INTO auth_attempts (ip, fails, window_start) VALUES (?, 1, ?)
+       ON CONFLICT(ip) DO UPDATE SET fails = 1, window_start = excluded.window_start`
+    )
+      .bind(ip, now)
+      .run();
+    return;
+  }
+
+  await env.DB.prepare('UPDATE auth_attempts SET fails = fails + 1 WHERE ip = ?')
+    .bind(ip)
+    .run();
+}
+
+export async function clearAuthFailures(request: Request, env: Env): Promise<void> {
+  const ip = clientIp(request);
+  await env.DB.prepare('DELETE FROM auth_attempts WHERE ip = ?').bind(ip).run();
+}
+
 export async function createSessionToken(env: Env, rememberMe: boolean): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const ttl = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 12;
