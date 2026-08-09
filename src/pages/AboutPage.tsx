@@ -107,8 +107,8 @@ export const AboutPage: React.FC = () => {
 
         </section>
 
-        {/* Curriculum Vitae (CV) Section */}
-        {profile.cv && profile.cv.length > 0 && (
+        {/* Curriculum Vitae (CV) Section — only when enabled in Studio */}
+        {profile.showCv && profile.cv && profile.cv.length > 0 && (
           <section className="border-t border-art-border/40 dark:border-art-darkBorder/40 pt-20">
             
             <header className="mb-12">

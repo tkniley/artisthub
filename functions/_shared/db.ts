@@ -30,6 +30,7 @@ export interface PortfolioProfile {
   instagramUrl: string;
   artsyUrl: string;
   pinterestUrl: string;
+  showCv: boolean;
   cv: CvSection[];
 }
 
@@ -62,6 +63,7 @@ function mapProfile(row: ProfileRow): PortfolioProfile {
     instagramUrl: row.instagram_url || '',
     artsyUrl: row.artsy_url || '',
     pinterestUrl: row.pinterest_url || '',
+    showCv: !!row.show_cv,
     cv,
   };
 }
@@ -113,12 +115,13 @@ export async function ensureSeeded(env: Env): Promise<void> {
     instagramUrl?: string;
     artsyUrl?: string;
     pinterestUrl?: string;
+    showCv?: boolean;
   };
   await env.DB.prepare(
     `INSERT INTO profile (
       id, name, tagline, philosophy, hero_image, bio_text, portrait_image, cv_json,
-      email, instagram_url, artsy_url, pinterest_url, updated_at
-    ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      email, instagram_url, artsy_url, pinterest_url, show_cv, updated_at
+    ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       seed.name,
@@ -132,6 +135,7 @@ export async function ensureSeeded(env: Env): Promise<void> {
       seed.instagramUrl || '',
       seed.artsyUrl || '',
       seed.pinterestUrl || '',
+      seed.showCv ? 1 : 0,
       Date.now()
     )
     .run();
@@ -250,7 +254,7 @@ export async function saveProfile(env: Env, profile: PortfolioProfile): Promise<
       name = ?, tagline = ?, philosophy = ?, hero_image = ?, bio_text = ?,
       portrait_image = ?, cv_json = ?,
       email = ?, instagram_url = ?, artsy_url = ?, pinterest_url = ?,
-      updated_at = ?
+      show_cv = ?, updated_at = ?
      WHERE id = 1`
   )
     .bind(
@@ -265,6 +269,7 @@ export async function saveProfile(env: Env, profile: PortfolioProfile): Promise<
       profile.instagramUrl || '',
       profile.artsyUrl || '',
       profile.pinterestUrl || '',
+      profile.showCv ? 1 : 0,
       Date.now()
     )
     .run();

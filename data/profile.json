@@ -9,6 +9,7 @@
   "instagramUrl": "",
   "artsyUrl": "",
   "pinterestUrl": "",
+  "showCv": false,
   "cv": [
     {
       "id": "cv-1",

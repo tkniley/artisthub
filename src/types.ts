@@ -38,6 +38,7 @@ export interface Profile {
   instagramUrl: string;
   artsyUrl: string;
   pinterestUrl: string;
+  showCv: boolean;
   cv: CVSection[];
 }
 

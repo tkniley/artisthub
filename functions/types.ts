@@ -33,6 +33,7 @@ export interface ProfileRow {
   instagram_url?: string;
   artsy_url?: string;
   pinterest_url?: string;
+  show_cv?: number;
 }
 
 export interface ArtworkRow {

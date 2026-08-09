@@ -113,6 +113,7 @@ export const getProfile = async (): Promise<Profile> => {
     instagramUrl: profile.instagramUrl || '',
     artsyUrl: profile.artsyUrl || '',
     pinterestUrl: profile.pinterestUrl || '',
+    showCv: !!profile.showCv,
     cv: profile.cv ? [...profile.cv] : [],
   };
 };

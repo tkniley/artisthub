@@ -26,6 +26,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
   const [instagramUrl, setInstagramUrl] = useState(profile.instagramUrl || '');
   const [artsyUrl, setArtsyUrl] = useState(profile.artsyUrl || '');
   const [pinterestUrl, setPinterestUrl] = useState(profile.pinterestUrl || '');
+  const [showCv, setShowCv] = useState(!!profile.showCv);
   const [cv, setCv] = useState<CVSection[]>(profile.cv || []);
   const [activeSectionId, setActiveSectionId] = useState(profile.cv?.[0]?.id || '');
   const [cvYear, setCvYear] = useState('');
@@ -67,6 +68,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
         instagramUrl: normalizeUrl(instagramUrl),
         artsyUrl: normalizeUrl(artsyUrl),
         pinterestUrl: normalizeUrl(pinterestUrl),
+        showCv,
         cv,
       };
       await saveProfile(next);
@@ -285,80 +287,99 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
 
         <section className="space-y-5 border-t border-art-border/40 pt-8">
           <h3 className="text-2xl font-serif">CV / exhibitions</h3>
-          {cv.length === 0 ? (
-            <p className="text-base text-art-muted">No CV sections yet.</p>
-          ) : (
+          <label className="flex items-start gap-3 text-base cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showCv}
+              onChange={(e) => setShowCv(e.target.checked)}
+              className="h-5 w-5 mt-0.5"
+            />
+            <span>
+              Show CV on the website
+              <span className="block text-sm text-art-muted mt-1">
+                Off by default. Turn on when you want visitors to see exhibitions and education.
+              </span>
+            </span>
+          </label>
+
+          {showCv && (
             <>
-              <div className="flex flex-wrap gap-2">
-                {cv.map((sec) => (
-                  <button
-                    key={sec.id}
-                    type="button"
-                    onClick={() => setActiveSectionId(sec.id)}
-                    className={`px-4 py-2 text-base border ${
-                      activeSectionId === sec.id
-                        ? 'bg-art-accent border-art-accent text-white'
-                        : 'border-art-border'
-                    }`}
-                  >
-                    {sec.category}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <input
-                  value={cvYear}
-                  onChange={(e) => setCvYear(e.target.value)}
-                  placeholder="Year"
-                  className="border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
-                />
-                <input
-                  value={cvTitle}
-                  onChange={(e) => setCvTitle(e.target.value)}
-                  placeholder="Title"
-                  className="sm:col-span-2 border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
-                />
-                <input
-                  value={cvDetail}
-                  onChange={(e) => setCvDetail(e.target.value)}
-                  placeholder="Place"
-                  className="border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={addCvItem}
-                className="inline-flex items-center gap-2 border border-art-border px-4 py-3 text-base hover:border-art-accent"
-              >
-                <Plus size={18} />
-                Add to this list
-              </button>
-
-              <div className="space-y-2">
-                {(activeSection?.items || []).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between gap-3 items-start border border-art-border/50 p-3"
-                  >
-                    <p className="text-base">
-                      <span className="text-art-accent font-semibold mr-2">{item.year}</span>
-                      <span className="font-serif italic">{item.title}</span>
-                      {item.detail && (
-                        <span className="text-art-muted"> — {item.detail}</span>
-                      )}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => deleteCvItem(activeSectionId, item.id)}
-                      className="text-red-600 p-2"
-                      aria-label="Remove CV row"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+              {cv.length === 0 ? (
+                <p className="text-base text-art-muted">No CV sections yet.</p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {cv.map((sec) => (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        onClick={() => setActiveSectionId(sec.id)}
+                        className={`px-4 py-2 text-base border ${
+                          activeSectionId === sec.id
+                            ? 'bg-art-accent border-art-accent text-white'
+                            : 'border-art-border'
+                        }`}
+                      >
+                        {sec.category}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <input
+                      value={cvYear}
+                      onChange={(e) => setCvYear(e.target.value)}
+                      placeholder="Year"
+                      className="border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+                    />
+                    <input
+                      value={cvTitle}
+                      onChange={(e) => setCvTitle(e.target.value)}
+                      placeholder="Title"
+                      className="sm:col-span-2 border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+                    />
+                    <input
+                      value={cvDetail}
+                      onChange={(e) => setCvDetail(e.target.value)}
+                      placeholder="Place"
+                      className="border border-art-border px-3 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addCvItem}
+                    className="inline-flex items-center gap-2 border border-art-border px-4 py-3 text-base hover:border-art-accent"
+                  >
+                    <Plus size={18} />
+                    Add to this list
+                  </button>
+
+                  <div className="space-y-2">
+                    {(activeSection?.items || []).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between gap-3 items-start border border-art-border/50 p-3"
+                      >
+                        <p className="text-base">
+                          <span className="text-art-accent font-semibold mr-2">{item.year}</span>
+                          <span className="font-serif italic">{item.title}</span>
+                          {item.detail && (
+                            <span className="text-art-muted"> — {item.detail}</span>
+                          )}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => deleteCvItem(activeSectionId, item.id)}
+                          className="text-red-600 p-2"
+                          aria-label="Remove CV row"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </section>

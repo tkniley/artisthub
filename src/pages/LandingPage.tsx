@@ -38,8 +38,9 @@ export const LandingPage: React.FC = () => {
     );
   }
 
-  // Find the next show from CV
-  const upcomingShow = profile.cv?.[0]?.items?.[0] || null;
+  // Exhibition highlight only when CV is enabled for the public site
+  const upcomingShow =
+    profile.showCv && profile.cv?.[0]?.items?.[0] ? profile.cv[0].items[0] : null;
 
   return (
     <motion.div
