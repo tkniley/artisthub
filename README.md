@@ -52,7 +52,7 @@ npm run deploy             # build + wrangler pages deploy
    npx wrangler pages secret put STUDIO_PASSCODE_HASH
    npx wrangler pages secret put SESSION_SECRET
    ```
-   `STUDIO_PASSCODE_HASH` is the SHA-256 hex of the passcode (default for `1988` is in `.dev.vars.example`).
+   `STUDIO_PASSCODE_HASH` is the SHA-256 hex of the passcode (see `.dev.vars.example`).
 4. Bind D1 (`DB`) and R2 (`IMAGES`) to the Pages project (or rely on `wrangler.jsonc` on deploy).
 5. Apply migrations remotely: `npm run db:migrate:remote`
 6. Deploy: `npm run deploy` (or connect the Git repo to Cloudflare Pages with build command `npm run build` and output `dist`).
