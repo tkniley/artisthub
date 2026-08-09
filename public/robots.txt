@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Private studio editor and API — do not crawl or index
+Disallow: /studio
+Disallow: /studio/
+Disallow: /api/

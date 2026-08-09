@@ -29,6 +29,7 @@ export function withCors(response: Response, request: Request): Response {
   for (const [key, value] of Object.entries(cors)) {
     headers.set(key, value);
   }
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

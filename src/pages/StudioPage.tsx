@@ -30,6 +30,17 @@ export const StudioPage: React.FC = () => {
   const [collections, setCollections] = useState<string[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    meta.setAttribute('data-studio-robots', 'true');
+    document.head.appendChild(meta);
+    return () => {
+      document.querySelectorAll('meta[data-studio-robots="true"]').forEach((el) => el.remove());
+    };
+  }, []);
+
   const loadAll = useCallback(async () => {
     await refreshPortfolio();
     const [p, arts, cols] = await Promise.all([
