@@ -1,8 +1,2 @@
-# ArtistHub — Local Environment Variables
-# Copy this file to a new file named `.env` in the same directory to customize settings.
-
-# The SHA-256 hash of your chosen private studio passcode.
-# Default passcode is `1988` (SHA-256 hash: 8266498d969081c29737b8daeb5b51d60e56d008fff243a39d16c3032d42f6cf).
-# Example: To change your passcode to "1234", generate a SHA-256 hash of "1234" (03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4) and put it below:
-# VITE_STUDIO_PASSCODE_HASH="03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
-VITE_STUDIO_PASSCODE_HASH="9207e4c76b92a2a06c8b4b76a084323df06e8b4eebca81d9f0c13636f8da3665"
+# Optional Vite vars (studio auth is now server-side via .dev.vars / Wrangler secrets).
+# Copy secrets to `.dev.vars` instead — see `.dev.vars.example`.

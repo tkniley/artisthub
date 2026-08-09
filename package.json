@@ -4,10 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "wrangler pages dev -- npm run dev:vite",
+    "dev:vite": "vite --port 5175",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler pages dev dist --local-protocol http",
+    "db:migrate:local": "wrangler d1 migrations apply artisthub --local",
+    "db:migrate:remote": "wrangler d1 migrations apply artisthub --remote",
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "types:cf": "wrangler types"
   },
   "dependencies": {
     "framer-motion": "^12.39.0",
@@ -17,6 +22,7 @@
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260801.1",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^24.12.3",
@@ -32,6 +38,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "wrangler": "^4.28.0"
   }
 }

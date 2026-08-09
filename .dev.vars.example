@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local Wrangler Pages Functions.
+# SHA-256 of passcode "1988" (change for production via `wrangler pages secret put`)
+STUDIO_PASSCODE_HASH=8266498d969081c29737b8daeb5b51d60e56d008fff243a39d16c3032d42f6cf
+# Random string used to sign studio session tokens
+SESSION_SECRET=change-me-to-a-long-random-string

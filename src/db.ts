@@ -1,59 +1,14 @@
 import type { Artwork, Profile, Inquiry } from './types';
 
-// ─── Static Data Imports (bundled at build time) ───────────────────────────
-import staticProfile from '../data/profile.json';
-import staticArtworks from '../data/artworks.json';
-import staticCollections from '../data/collections.json';
+const TOKEN_KEY = 'artisthub_studio_token';
 
-// ─── localStorage Keys ─────────────────────────────────────────────────────
-const LS_PROFILE = 'artisthub_profile';
-const LS_ARTWORKS = 'artisthub_artworks';
-const LS_COLLECTIONS = 'artisthub_collections';
-const LS_INQUIRIES = 'artisthub_inquiries';
-
-// ─── localStorage Helpers ──────────────────────────────────────────────────
-function lsGet<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) return JSON.parse(raw) as T;
-  } catch {
-    // corrupted — ignore and fall back to static
-  }
-  return null;
-}
-
-function lsSet(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // quota exceeded or private browsing — silent fail
-  }
-}
-
-function lsRemove(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // silent
-  }
-}
-
-// ─── In-Memory State (hydrated from localStorage → static JSON fallback) ──
-// On first load: if localStorage has saved data, use it.
-// Otherwise fall back to the static JSON bundled at build time.
-// Every save* call persists to BOTH in-memory AND localStorage.
-
-let currentProfile: Profile = lsGet<Profile>(LS_PROFILE) ?? { ...staticProfile };
-let currentArtworks: Artwork[] = lsGet<Artwork[]>(LS_ARTWORKS) ?? staticArtworks.map((a) => ({ ...a } as Artwork));
-let currentCollections: string[] = lsGet<string[]>(LS_COLLECTIONS) ?? [...staticCollections];
-let currentInquiries: Inquiry[] = lsGet<Inquiry[]>(LS_INQUIRIES) ?? [];
-
-// Track whether localStorage state differs from the static build data
-let _hasUnsavedChanges = lsGet<Profile>(LS_PROFILE) !== null;
-
-// ─── Change Listeners ──────────────────────────────────────────────────────
 type Listener = () => void;
-const listeners: Set<Listener> = new Set();
+const listeners = new Set<Listener>();
+
+let cachedProfile: Profile | null = null;
+let cachedArtworks: Artwork[] | null = null;
+let cachedCollections: string[] | null = null;
+let cachedInquiries: Inquiry[] | null = null;
 
 export const subscribe = (fn: Listener): (() => void) => {
   listeners.add(fn);
@@ -64,104 +19,226 @@ const notifyListeners = () => {
   listeners.forEach((fn) => fn());
 };
 
-// ─── Local Filesystem Autosave (Development Only) ───────────────────────────
-async function syncToDisk(): Promise<void> {
-  if (import.meta.env.DEV) {
-    try {
-      const data = {
-        profile: currentProfile,
-        artworks: currentArtworks,
-        collections: currentCollections,
-      };
-      const res = await fetch('/api/save-portfolio', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        console.error('Failed to autosave changes to local filesystem.');
-      } else {
-        console.log('Autosaved changes to local data/*.json files successfully!');
-      }
-    } catch (err) {
-      console.error('Error autosaving to local filesystem:', err);
-    }
+function getToken(): string | null {
+  try {
+    return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
   }
 }
 
-// ─── Public API — identical signatures to the old layer ────────────────────
+export function setStudioToken(token: string, rememberMe: boolean): void {
+  try {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    if (rememberMe) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearStudioToken(): void {
+  try {
+    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    // legacy keys from old client-only auth
+    sessionStorage.removeItem('artisthub_studio_auth');
+    localStorage.removeItem('artisthub_studio_auth');
+  } catch {
+    // ignore
+  }
+}
+
+export function hasStudioSession(): boolean {
+  return !!getToken();
+}
+
+async function api<T>(path: string, init: RequestInit = {}, auth = false): Promise<T> {
+  const headers = new Headers(init.headers || {});
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (auth) {
+    const token = getToken();
+    if (!token) throw new Error('Please sign in to Studio first.');
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const res = await fetch(path, { ...init, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
+  }
+  return data as T;
+}
+
+async function loadPortfolio(force = false): Promise<{
+  profile: Profile;
+  artworks: Artwork[];
+  collections: string[];
+}> {
+  if (!force && cachedProfile && cachedArtworks && cachedCollections) {
+    return {
+      profile: cachedProfile,
+      artworks: cachedArtworks,
+      collections: cachedCollections,
+    };
+  }
+
+  const data = await api<{
+    profile: Profile;
+    artworks: Artwork[];
+    collections: string[];
+  }>('/api/portfolio');
+
+  cachedProfile = data.profile;
+  cachedArtworks = data.artworks;
+  cachedCollections = data.collections;
+  return data;
+}
+
+export const loginStudio = async (passcode: string, rememberMe: boolean): Promise<void> => {
+  const data = await api<{ token: string }>('/api/auth', {
+    method: 'POST',
+    body: JSON.stringify({ passcode, rememberMe }),
+  });
+  setStudioToken(data.token, rememberMe);
+};
 
 export const getProfile = async (): Promise<Profile> => {
-  return { ...currentProfile };
+  const { profile } = await loadPortfolio();
+  return { ...profile, cv: profile.cv ? [...profile.cv] : [] };
 };
 
 export const saveProfile = async (profile: Profile): Promise<void> => {
-  currentProfile = { ...profile };
-  lsSet(LS_PROFILE, currentProfile);
-  _hasUnsavedChanges = true;
+  await api('/api/profile', { method: 'PUT', body: JSON.stringify(profile) }, true);
+  cachedProfile = { ...profile };
   notifyListeners();
-  await syncToDisk();
 };
 
 export const getArtworks = async (): Promise<Artwork[]> => {
-  return [...currentArtworks].sort((a, b) => b.createdAt - a.createdAt);
+  const { artworks } = await loadPortfolio();
+  return [...artworks].sort((a, b) => b.createdAt - a.createdAt);
 };
 
 export const saveArtwork = async (artwork: Artwork): Promise<void> => {
-  const idx = currentArtworks.findIndex((a) => a.id === artwork.id);
-  if (idx >= 0) {
-    currentArtworks[idx] = { ...artwork };
-  } else {
-    currentArtworks.push({ ...artwork });
-  }
-  lsSet(LS_ARTWORKS, currentArtworks);
-  _hasUnsavedChanges = true;
+  const method = cachedArtworks?.some((a) => a.id === artwork.id) ? 'PUT' : 'POST';
+  const path = method === 'PUT' ? `/api/artworks/${encodeURIComponent(artwork.id)}` : '/api/artworks';
+  await api(path, { method, body: JSON.stringify(artwork) }, true);
+
+  const list = cachedArtworks ? [...cachedArtworks] : [];
+  const idx = list.findIndex((a) => a.id === artwork.id);
+  if (idx >= 0) list[idx] = { ...artwork };
+  else list.push({ ...artwork });
+  cachedArtworks = list;
   notifyListeners();
-  await syncToDisk();
 };
 
 export const deleteArtwork = async (id: string): Promise<void> => {
-  currentArtworks = currentArtworks.filter((a) => a.id !== id);
-  lsSet(LS_ARTWORKS, currentArtworks);
-  _hasUnsavedChanges = true;
+  await api(`/api/artworks/${encodeURIComponent(id)}`, { method: 'DELETE' }, true);
+  cachedArtworks = (cachedArtworks || []).filter((a) => a.id !== id);
   notifyListeners();
-  await syncToDisk();
 };
 
 export const getCollections = async (): Promise<string[]> => {
-  return [...currentCollections];
+  const { collections } = await loadPortfolio();
+  return [...collections];
 };
 
 export const saveCollections = async (collections: string[]): Promise<void> => {
-  currentCollections = [...collections];
-  lsSet(LS_COLLECTIONS, currentCollections);
-  _hasUnsavedChanges = true;
+  // Compatibility shim: sync by creating missing names.
+  const current = await getCollections();
+  for (const name of collections) {
+    if (!current.includes(name)) {
+      await api('/api/collections', { method: 'POST', body: JSON.stringify({ name }) }, true);
+    }
+  }
+  for (const name of current) {
+    if (!collections.includes(name)) {
+      await api(`/api/collections/${encodeURIComponent(name)}`, { method: 'DELETE' }, true);
+    }
+  }
+  cachedCollections = [...collections];
   notifyListeners();
-  await syncToDisk();
+};
+
+export const addCollection = async (name: string): Promise<string[]> => {
+  const data = await api<{ collections: string[] }>(
+    '/api/collections',
+    { method: 'POST', body: JSON.stringify({ name }) },
+    true
+  );
+  cachedCollections = data.collections;
+  notifyListeners();
+  return data.collections;
+};
+
+export const renameCollection = async (oldName: string, newName: string): Promise<string[]> => {
+  const data = await api<{ collections: string[] }>(
+    `/api/collections/${encodeURIComponent(oldName)}`,
+    { method: 'PUT', body: JSON.stringify({ name: newName, oldName }) },
+    true
+  );
+  cachedCollections = data.collections;
+  // Refresh artworks so tags reflect rename
+  await loadPortfolio(true);
+  notifyListeners();
+  return data.collections;
+};
+
+export const removeCollection = async (name: string): Promise<string[]> => {
+  const data = await api<{ collections: string[] }>(
+    `/api/collections/${encodeURIComponent(name)}`,
+    { method: 'DELETE' },
+    true
+  );
+  cachedCollections = data.collections;
+  await loadPortfolio(true);
+  notifyListeners();
+  return data.collections;
 };
 
 export const getInquiries = async (): Promise<Inquiry[]> => {
-  return [...currentInquiries].sort((a, b) => b.createdAt - a.createdAt);
+  if (cachedInquiries) return [...cachedInquiries].sort((a, b) => b.createdAt - a.createdAt);
+  const data = await api<{ inquiries: Inquiry[] }>('/api/inquiries', {}, true);
+  cachedInquiries = data.inquiries;
+  return [...cachedInquiries].sort((a, b) => b.createdAt - a.createdAt);
 };
 
 export const saveInquiry = async (inquiry: Inquiry): Promise<void> => {
-  const idx = currentInquiries.findIndex((i) => i.id === inquiry.id);
-  if (idx >= 0) {
-    currentInquiries[idx] = { ...inquiry };
+  const token = getToken();
+  if (token && cachedInquiries?.some((i) => i.id === inquiry.id)) {
+    await api(
+      `/api/inquiries/${encodeURIComponent(inquiry.id)}`,
+      { method: 'PUT', body: JSON.stringify(inquiry) },
+      true
+    );
+    cachedInquiries = (cachedInquiries || []).map((i) =>
+      i.id === inquiry.id ? { ...inquiry } : i
+    );
   } else {
-    currentInquiries.push({ ...inquiry });
+    await api('/api/inquiries', { method: 'POST', body: JSON.stringify(inquiry) });
+    if (cachedInquiries) {
+      const idx = cachedInquiries.findIndex((i) => i.id === inquiry.id);
+      if (idx >= 0) cachedInquiries[idx] = { ...inquiry };
+      else cachedInquiries = [...cachedInquiries, { ...inquiry }];
+    }
   }
-  lsSet(LS_INQUIRIES, currentInquiries);
+  notifyListeners();
 };
 
 export const deleteInquiry = async (id: string): Promise<void> => {
-  currentInquiries = currentInquiries.filter((i) => i.id !== id);
-  lsSet(LS_INQUIRIES, currentInquiries);
+  await api(`/api/inquiries/${encodeURIComponent(id)}`, { method: 'DELETE' }, true);
+  cachedInquiries = (cachedInquiries || []).filter((i) => i.id !== id);
+  notifyListeners();
 };
 
-// ─── Export / Import (Publish workflow) ────────────────────────────────────
+export const uploadImage = async (file: File): Promise<string> => {
+  const form = new FormData();
+  form.append('file', file);
+  const data = await api<{ url: string }>('/api/upload', { method: 'POST', body: form }, true);
+  return data.url;
+};
 
 export interface PortfolioBackup {
   version: string;
@@ -171,63 +248,57 @@ export interface PortfolioBackup {
   collections: string[];
 }
 
-/** Build a full snapshot of the current state for download. */
 export const exportPortfolioData = async (): Promise<PortfolioBackup> => {
-  return {
-    version: 'artisthub_v2',
-    timestamp: Date.now(),
-    profile: { ...currentProfile },
-    artworks: currentArtworks.map((a) => ({ ...a })),
-    collections: [...currentCollections],
-  };
+  return api<PortfolioBackup>('/api/backup', {}, true);
 };
 
-/** Load a backup into memory + localStorage. Persists across refreshes. */
-export const importPortfolioData = async (backup: PortfolioBackup): Promise<void> => {
-  if (!backup.version || !backup.version.startsWith('artisthub_v')) {
-    throw new Error('Invalid backup file — missing or unrecognised version.');
-  }
-  if (!backup.profile || !Array.isArray(backup.artworks) || !Array.isArray(backup.collections)) {
-    throw new Error('Invalid backup data structure.');
-  }
+export const importPortfolioData = async (_backup?: PortfolioBackup): Promise<void> => {
+  void _backup;
+  throw new Error(
+    'Import is no longer needed — your website saves live to the cloud. Contact your helper if you need a restore from backup.'
+  );
+};
 
-  currentProfile = { ...backup.profile };
-  currentArtworks = backup.artworks.map((a) => ({ ...a } as Artwork));
-  currentCollections = [...backup.collections];
+export const hasUnsavedChanges = (): boolean => false;
 
-  // Persist to localStorage so data survives refresh
-  lsSet(LS_PROFILE, currentProfile);
-  lsSet(LS_ARTWORKS, currentArtworks);
-  lsSet(LS_COLLECTIONS, currentCollections);
-
-  _hasUnsavedChanges = true;
+export const resetToStaticData = async (): Promise<void> => {
+  await loadPortfolio(true);
+  cachedInquiries = null;
   notifyListeners();
-  await syncToDisk();
 };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
-/** Whether localStorage state differs from the static build data. */
-export const hasUnsavedChanges = (): boolean => _hasUnsavedChanges;
-
-/** Reset everything back to the static build data and clear localStorage. */
-export const resetToStaticData = (): void => {
-  currentProfile = { ...staticProfile };
-  currentArtworks = staticArtworks.map((a) => ({ ...a } as Artwork));
-  currentCollections = [...staticCollections];
-  currentInquiries = [];
-
-  lsRemove(LS_PROFILE);
-  lsRemove(LS_ARTWORKS);
-  lsRemove(LS_COLLECTIONS);
-  lsRemove(LS_INQUIRIES);
-
-  _hasUnsavedChanges = false;
+export const refreshPortfolio = async (): Promise<void> => {
+  await loadPortfolio(true);
+  cachedInquiries = null;
   notifyListeners();
-  syncToDisk(); // Non-blocking sync to reset files on disk as well
 };
 
-// Backwards-compat no-op
 export const seedDatabaseIfEmpty = async (): Promise<void> => {
-  // no-op — data comes from static JSON + localStorage
+  await loadPortfolio(true);
 };
+
+/** Compress an image file in the browser before upload. */
+export async function compressImageFile(file: File, maxEdge = 2000, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/')) return file;
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, 'image/jpeg', quality)
+  );
+  if (!blob) return file;
+
+  const base = file.name.replace(/\.[^.]+$/, '') || 'photo';
+  return new File([blob], `${base}.jpg`, { type: 'image/jpeg' });
+}

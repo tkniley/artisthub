@@ -1,95 +1,91 @@
-# ArtistHub — Premium Portfolio & Studio CMS
+# ArtistHub — Portfolio with Mom-Friendly Studio CMS
 
-ArtistHub is a high-end, modern, local-first portfolio and Content Management System (CMS) tailored specifically for professional visual artists and sculptors. Designed with minimalist gallery aesthetics, it provides a seamless visitor experience alongside a secure, browser-local private dashboard to manage the artist's CV, biography, gallery collection, and incoming customer inquiries.
-
----
-
-## 🏛️ Purpose & Design Philosophy
-The platform is crafted to match the sophisticated, tactile nature of physical art spaces. Drawing inspiration from fine art institutions, it features:
-* **Rich Aesthetics**: Vibrant yet neutral palettes, soft brushed champagne gold accents (`#A88D65`), premium typography (`Cormorant Garamond` & `Inter`), and delicate dividers.
-* **Responsive Sophistication**: Clean transitions, glassmorphic blurred overlays, smooth image zoom transitions, and light/dark theme synchronization.
-* **Serverless & Local-First**: Zero databases to configure externally. The artist's entire gallery remains safely within their browser, enabling them to customize their portfolio and export files on the go.
+Artist portfolio site with a private **Studio** editor. Paintings, collections, bio/CV, and messages save to **Cloudflare D1 + R2** and go live immediately — no redeploy for content changes.
 
 ---
 
-## 🛠️ Technical Architecture
+## How it works
 
-### 1. The Core Stack
-* **Vite + React 19 + TypeScript**: A blazing-fast modern builder supplying type safety and Hot Module Replacement (HMR).
-* **Tailwind CSS v4**: Utile and elegant layouts using high-fidelity spacing, fluid grids, and dark-mode directives.
-* **Framer Motion**: Smooth page transitions, fade-in animations, and haptic feedback.
-* **Lucide React**: Clean, lightweight geometric vector icons.
+| Piece | Role |
+|--------|------|
+| Vite + React | Public site + Studio UI |
+| Cloudflare Pages Functions | `/api/*` backend |
+| D1 (SQLite) | Profile, artworks, collections, inquiries |
+| R2 | New photo uploads (`/api/media/...`) |
+| `public/vonder/` | Existing gallery photos (static) |
 
-### 2. Private Client-Side Database (IndexedDB)
-* Located in `src/db.ts`, the application manages a client-side database called `ArtistHubDB` via standard browser IndexedDB APIs.
-* **Auto-Seeding**: Upon initial launch, the system automatically seeds default profile info (representing the sculptor **Eleonora Vance**), collections list, and sample high-definition artworks.
-* **Base64 Storage**: Supports uploading high-quality images directly from the local disk, converting them into optimized Base64 data strings stored safely inside the browser's storage sandbox.
-
-### 3. Secure Studio Access Gate (Hybrid Security)
-Because the CMS is built into the frontend bundle, access to `/studio` is secured through a hybrid approach:
-* **Hashed Passcode Gate**: Access to the Studio is restricted by a passcode check screen. The passcode is cryptographically validated using the browser's native `crypto.subtle` SHA-256 API, meaning the plaintext passcode is never exposed in the source code or javascript chunks.
-  * *Default Passcode*: `1988` (the artist's birth year).
-  * *Session Persistence*: Supports temporary tabs-only sessions (`sessionStorage`) or persistent authorization (`localStorage`) with a 30-day "Remember Me" option.
-* **Hidden Entrances**:
-  * *Keyboard Shortcut*: Pressing `Ctrl + Shift + S` from any page redirects the user to `/studio`.
-  * *Triple-Click trigger*: Triple-clicking the copyright text in the website `Footer` opens the gate.
-  * The link is entirely hidden from normal site navigation to maintain professional presentation.
+Studio passcode is checked **on the server**. Session tokens are signed with `SESSION_SECRET`.
 
 ---
 
-## 📂 Component Directory & Page Breakdown
+## Local development
 
-```
-src/
-├── components/
-│   ├── Navbar.tsx         # Sticky navigation with fluid theme toggle (Sun/Moon icons) and responsive drawer
-│   └── Footer.tsx         # Minimalist credits, social indicators, and hidden triple-click copyright trigger
-├── pages/
-│   ├── LandingPage.tsx    # High-impact split hero page showing philosophy and featured pieces grid
-│   ├── GalleryPage.tsx    # Fully filterable archive (by collection type/availability) with rich Lightbox modals
-│   ├── AboutPage.tsx      # Comprehensive biography alongside a beautifully structured, dynamic academic CV
-│   └── StudioPage.tsx     # The admin dashboard featuring overview statistics, catalog editors, and inbox managers
-├── db.ts                  # Local-first IndexedDB manager handling CRUD transactions and initial seed records
-├── types.ts               # Rigid TypeScript interfaces for Artworks, Profiles, Inquiries, and CV structures
-└── main.tsx & App.tsx     # Application router setup with global keyboard shortcuts and Framer Motion wrappers
-```
-
----
-
-## 🚀 Setup & Local Development
-
-### Prerequisites
-* **Node.js** (v18 or higher recommended)
-* **npm** or similar package managers
-
-### Installation
-1. Clone the repository and navigate to the project directory:
-   ```bash
-   cd artisthub
-   ```
-2. Install all dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server locally:
-   ```bash
-   npm run dev
-   ```
-4. Access the site in your browser (typically `http://localhost:5175`).
-
----
-
-## 🎨 Advanced Configurations
-
-### Custom Passcode Hash
-To change the default passcode (`1988`), generate a SHA-256 hash of your chosen passcode and provide it as an environment variable in a `.env` file at the root of the project:
-```env
-VITE_STUDIO_PASSCODE_HASH="your_sha256_hash_here"
-```
-
-### Production Bundling
-Compile the application into optimized static assets ready to be served on platforms like Netlify, Vercel, or GitHub Pages:
 ```bash
-npm run build
+npm install
+cp .dev.vars.example .dev.vars   # if needed
+npm run db:migrate:local
+npm run dev
 ```
-The compiled output will be generated inside the `/dist` directory.
+
+`npm run dev` runs Vite behind `wrangler pages dev` so `/api` + D1/R2 work locally.
+
+- Site: usually `http://localhost:8788` (or the port Wrangler prints)
+- Studio: `/studio` (also in the nav) — default passcode `1988`
+
+Useful commands:
+
+```bash
+npm run build              # production client build
+npm run preview            # serve dist + Functions locally
+npm run db:migrate:local   # apply D1 migrations locally
+npm run deploy             # build + wrangler pages deploy
+```
+
+---
+
+## First Cloudflare deploy (one-time)
+
+1. Create a D1 database and R2 bucket in the Cloudflare dashboard (or CLI).
+2. Put the real `database_id` in [`wrangler.jsonc`](wrangler.jsonc).
+3. Set secrets on the Pages project:
+   ```bash
+   npx wrangler pages secret put STUDIO_PASSCODE_HASH
+   npx wrangler pages secret put SESSION_SECRET
+   ```
+   `STUDIO_PASSCODE_HASH` is the SHA-256 hex of the passcode (default for `1988` is in `.dev.vars.example`).
+4. Bind D1 (`DB`) and R2 (`IMAGES`) to the Pages project (or rely on `wrangler.jsonc` on deploy).
+5. Apply migrations remotely: `npm run db:migrate:remote`
+6. Deploy: `npm run deploy` (or connect the Git repo to Cloudflare Pages with build command `npm run build` and output `dist`).
+
+The first `GET /api/portfolio` seeds content from `data/*.json` if the database is empty. Existing image paths keep using files in `public/`.
+
+After that, your mom only uses **Studio → Save**. No Git, no JSON export, no redeploy for content.
+
+---
+
+## Studio (for the artist)
+
+1. Open **Studio** in the menu (or bookmark `/studio`).
+2. Enter the passcode.
+3. **My Paintings** — add/edit photos and titles (details optional).
+4. **Collections** — name groups for the gallery filters.
+5. **About my site** — home text, bio, photos, CV.
+6. **Messages** — inquiries from the gallery contact form.
+
+Saving shows: “Saved — it’s on your website now.”
+
+Optional: **Download backup** saves a JSON snapshot for peace of mind.
+
+---
+
+## Project layout
+
+```
+data/                 # Seed JSON (imported on first empty DB)
+functions/api/        # Pages Functions API
+migrations/           # D1 schema
+public/               # Static assets including /vonder photos
+src/db.ts             # Client API layer
+src/studio/           # Mom-friendly Studio panels
+src/pages/            # Public pages + Studio shell
+```
