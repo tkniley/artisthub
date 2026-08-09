@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, CheckCircle, Info } from 'lucide-react';
-import { getArtworks, getCollections, saveInquiry } from '../db';
+import { getArtworks, getCollections, getProfile, saveInquiry } from '../db';
 import type { Artwork, Inquiry } from '../types';
 
 export const GalleryPage: React.FC = () => {
@@ -11,6 +11,7 @@ export const GalleryPage: React.FC = () => {
   // Core portfolio state
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
+  const [artistName, setArtistName] = useState('Vonder Gray');
   const [activeCollection, setActiveCollection] = useState<string>('All');
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +29,15 @@ export const GalleryPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const allWorks = await getArtworks();
+        const [allWorks, list, profile] = await Promise.all([
+          getArtworks(),
+          getCollections(),
+          getProfile(),
+        ]);
         // Filter: only show pieces intended for the main gallery
-        const galleryWorks = allWorks.filter((art) => art.isGallery);
-        setArtworks(galleryWorks);
-
-        const list = await getCollections();
+        setArtworks(allWorks.filter((art) => art.isGallery));
         setCollections(list);
+        if (profile.name?.trim()) setArtistName(profile.name.trim());
       } catch (err) {
         console.error("Error fetching gallery data:", err);
       } finally {
@@ -67,7 +70,7 @@ export const GalleryPage: React.FC = () => {
     setSelectedArtwork(art);
     // Prefill inquiry form message
     setInquiryMessage(
-      `Dear Eleonora Vance Studio,\n\nI am highly interested in inquiring about your piece titled "${art.title}" (${art.year}). Please provide information regarding availability, acquisition pricing, and logistics/shipping details.\n\nBest regards.`
+      `Dear ${artistName},\n\nI am highly interested in inquiring about your piece titled "${art.title}" (${art.year}). Please provide information regarding availability, acquisition pricing, and logistics/shipping details.\n\nBest regards.`
     );
     setInquirySubmitted(false);
     
@@ -87,7 +90,7 @@ export const GalleryPage: React.FC = () => {
     setSearchParams(searchParams);
   };
 
-  // Submit Inquiry Form to IndexedDB
+  // Submit inquiry to the cloud API
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedArtwork || !inquiryName || !inquiryEmail || !inquiryMessage) return;
@@ -366,7 +369,7 @@ export const GalleryPage: React.FC = () => {
                       <CheckCircle size={18} className="flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold mb-1">Inquiry Sent Successfully.</p>
-                        <p>The Eleonora Vance administrative studio will respond to your email with a full catalog brochure and logistic quotes shortly.</p>
+                        <p>{artistName}’s studio will respond to your email with details shortly.</p>
                       </div>
                     </motion.div>
                   ) : (

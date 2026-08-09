@@ -26,6 +26,10 @@ export interface PortfolioProfile {
   heroImage: string;
   bioText: string;
   portraitImage: string;
+  email: string;
+  instagramUrl: string;
+  artsyUrl: string;
+  pinterestUrl: string;
   cv: CvSection[];
 }
 
@@ -54,6 +58,10 @@ function mapProfile(row: ProfileRow): PortfolioProfile {
     heroImage: row.hero_image,
     bioText: row.bio_text,
     portraitImage: row.portrait_image,
+    email: row.email || '',
+    instagramUrl: row.instagram_url || '',
+    artsyUrl: row.artsy_url || '',
+    pinterestUrl: row.pinterest_url || '',
     cv,
   };
 }
@@ -94,18 +102,36 @@ export async function ensureSeeded(env: Env): Promise<void> {
   if (existing) return;
 
   const cvJson = JSON.stringify(seedProfile.cv || []);
+  const seed = seedProfile as {
+    name: string;
+    tagline: string;
+    philosophy: string;
+    heroImage: string;
+    bioText: string;
+    portraitImage: string;
+    email?: string;
+    instagramUrl?: string;
+    artsyUrl?: string;
+    pinterestUrl?: string;
+  };
   await env.DB.prepare(
-    `INSERT INTO profile (id, name, tagline, philosophy, hero_image, bio_text, portrait_image, cv_json, updated_at)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO profile (
+      id, name, tagline, philosophy, hero_image, bio_text, portrait_image, cv_json,
+      email, instagram_url, artsy_url, pinterest_url, updated_at
+    ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
-      seedProfile.name,
-      seedProfile.tagline,
-      seedProfile.philosophy,
-      seedProfile.heroImage,
-      seedProfile.bioText,
-      seedProfile.portraitImage,
+      seed.name,
+      seed.tagline,
+      seed.philosophy,
+      seed.heroImage,
+      seed.bioText,
+      seed.portraitImage,
       cvJson,
+      seed.email || '',
+      seed.instagramUrl || '',
+      seed.artsyUrl || '',
+      seed.pinterestUrl || '',
       Date.now()
     )
     .run();
@@ -222,7 +248,9 @@ export async function saveProfile(env: Env, profile: PortfolioProfile): Promise<
   await env.DB.prepare(
     `UPDATE profile SET
       name = ?, tagline = ?, philosophy = ?, hero_image = ?, bio_text = ?,
-      portrait_image = ?, cv_json = ?, updated_at = ?
+      portrait_image = ?, cv_json = ?,
+      email = ?, instagram_url = ?, artsy_url = ?, pinterest_url = ?,
+      updated_at = ?
      WHERE id = 1`
   )
     .bind(
@@ -233,6 +261,10 @@ export async function saveProfile(env: Env, profile: PortfolioProfile): Promise<
       profile.bioText,
       profile.portraitImage,
       JSON.stringify(profile.cv || []),
+      profile.email || '',
+      profile.instagramUrl || '',
+      profile.artsyUrl || '',
+      profile.pinterestUrl || '',
       Date.now()
     )
     .run();

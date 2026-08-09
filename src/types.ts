@@ -34,6 +34,10 @@ export interface Profile {
   heroImage: string;
   bioText: string;
   portraitImage: string;
+  email: string;
+  instagramUrl: string;
+  artsyUrl: string;
+  pinterestUrl: string;
   cv: CVSection[];
 }
 

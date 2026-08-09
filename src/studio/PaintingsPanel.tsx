@@ -37,11 +37,32 @@ export const PaintingsPanel: React.FC<PaintingsPanelProps> = ({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mediumFocused, setMediumFocused] = useState(false);
 
   const sorted = useMemo(
     () => [...artworks].sort((a, b) => b.createdAt - a.createdAt),
     [artworks]
   );
+
+  const knownMediums = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const art of artworks) {
+      const value = (art.medium || '').trim();
+      if (!value) continue;
+      counts.set(value, (counts.get(value) || 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([value]) => value);
+  }, [artworks]);
+
+  const mediumSuggestions = useMemo(() => {
+    const query = form.medium.trim().toLowerCase();
+    if (!query) return knownMediums;
+    return knownMediums.filter(
+      (m) => m.toLowerCase().includes(query) && m.toLowerCase() !== query
+    );
+  }, [knownMediums, form.medium]);
 
   const startAdd = () => {
     setEditingId(null);
@@ -251,14 +272,65 @@ export const PaintingsPanel: React.FC<PaintingsPanelProps> = ({
                 </div>
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-base font-medium mb-2">Medium</label>
                 <input
                   value={form.medium}
                   onChange={(e) => setForm({ ...form, medium: e.target.value })}
-                  placeholder="Oil on canvas"
+                  onFocus={() => setMediumFocused(true)}
+                  onBlur={() => {
+                    // Delay so a suggestion click can register first
+                    window.setTimeout(() => setMediumFocused(false), 150);
+                  }}
+                  placeholder="Type a new medium, or pick one you’ve used"
+                  list="medium-suggestions"
+                  autoComplete="off"
                   className="w-full border border-art-border px-4 py-3 text-base bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
                 />
+                <datalist id="medium-suggestions">
+                  {knownMediums.map((m) => (
+                    <option key={m} value={m} />
+                  ))}
+                </datalist>
+                {mediumFocused && mediumSuggestions.length > 0 && (
+                  <div className="mt-2 border border-art-border/60 bg-art-card dark:bg-art-darkCard max-h-48 overflow-y-auto">
+                    <p className="px-3 py-2 text-sm text-art-muted border-b border-art-border/40">
+                      Previously used
+                    </p>
+                    {mediumSuggestions.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setForm({ ...form, medium: m });
+                          setMediumFocused(false);
+                        }}
+                        className="w-full text-left px-4 py-3 text-base hover:bg-art-accent/10 border-b border-art-border/30 last:border-b-0"
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!mediumFocused && knownMediums.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {knownMediums.slice(0, 8).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setForm({ ...form, medium: m })}
+                        className={`px-3 py-2 text-sm border transition-colors ${
+                          form.medium === m
+                            ? 'border-art-accent bg-art-accent/15 text-art-accent'
+                            : 'border-art-border text-art-dark/70 dark:text-art-bg/70 hover:border-art-accent'
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

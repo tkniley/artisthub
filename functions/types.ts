@@ -29,6 +29,10 @@ export interface ProfileRow {
   bio_text: string;
   portrait_image: string;
   cv_json: string;
+  email?: string;
+  instagram_url?: string;
+  artsy_url?: string;
+  pinterest_url?: string;
 }
 
 export interface ArtworkRow {

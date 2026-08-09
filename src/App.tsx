@@ -22,9 +22,10 @@ const ScrollToTop: React.FC = () => {
 };
 
 // Animated Route Wrapper to hook up Framer Motion transitions
-const AnimatedRoutes: React.FC<{ artistName: string }> = ({ artistName }) => {
+const AnimatedRoutes: React.FC<{ profile: Profile | null }> = ({ profile }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const artistName = profile?.name || 'Vonder Gray';
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,7 +65,13 @@ const AnimatedRoutes: React.FC<{ artistName: string }> = ({ artistName }) => {
       </div>
 
       {/* Dynamic Footer */}
-      <Footer artistName={artistName} />
+      <Footer
+        artistName={artistName}
+        email={profile?.email}
+        instagramUrl={profile?.instagramUrl}
+        artsyUrl={profile?.artsyUrl}
+        pinterestUrl={profile?.pinterestUrl}
+      />
     </div>
   );
 };
@@ -98,12 +105,10 @@ export const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  const artistName = profile?.name || 'Vonder Gray';
-
   return (
     <Router>
       <ScrollToTop />
-      <AnimatedRoutes artistName={artistName} />
+      <AnimatedRoutes profile={profile} />
     </Router>
   );
 };

@@ -8,6 +8,13 @@ interface AboutPanelProps {
   onChanged: () => Promise<void>;
 }
 
+function normalizeUrl(value: string): string {
+  const v = value.trim();
+  if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return v;
+  return `https://${v}`;
+}
+
 export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) => {
   const [name, setName] = useState(profile.name);
   const [tagline, setTagline] = useState(profile.tagline);
@@ -15,6 +22,10 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
   const [bioText, setBioText] = useState(profile.bioText);
   const [heroImage, setHeroImage] = useState(profile.heroImage);
   const [portraitImage, setPortraitImage] = useState(profile.portraitImage);
+  const [email, setEmail] = useState(profile.email || '');
+  const [instagramUrl, setInstagramUrl] = useState(profile.instagramUrl || '');
+  const [artsyUrl, setArtsyUrl] = useState(profile.artsyUrl || '');
+  const [pinterestUrl, setPinterestUrl] = useState(profile.pinterestUrl || '');
   const [cv, setCv] = useState<CVSection[]>(profile.cv || []);
   const [activeSectionId, setActiveSectionId] = useState(profile.cv?.[0]?.id || '');
   const [cvYear, setCvYear] = useState('');
@@ -38,6 +49,11 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
       setError('Please enter your name.');
       return;
     }
+    const cleanEmail = email.trim();
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError('Please enter a valid email address, or leave it blank.');
+      return;
+    }
     setBusy(true);
     try {
       const next: Profile = {
@@ -47,9 +63,16 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
         heroImage,
         bioText: bioText.trim(),
         portraitImage,
+        email: cleanEmail,
+        instagramUrl: normalizeUrl(instagramUrl),
+        artsyUrl: normalizeUrl(artsyUrl),
+        pinterestUrl: normalizeUrl(pinterestUrl),
         cv,
       };
       await saveProfile(next);
+      setInstagramUrl(next.instagramUrl);
+      setArtsyUrl(next.artsyUrl);
+      setPinterestUrl(next.pinterestUrl);
       await onChanged();
       setSuccess('Saved — it’s on your website now.');
     } catch (err) {
@@ -102,7 +125,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
       <div>
         <h2 className="text-3xl font-serif">About my site</h2>
         <p className="text-base text-art-muted mt-2">
-          Update your name, home page text, biography, photos, and CV.
+          Update your name, contact info, home page text, biography, photos, and CV.
         </p>
       </div>
 
@@ -164,6 +187,50 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ profile, onChanged }) =>
                 </label>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="space-y-5 border-t border-art-border/40 pt-8">
+          <h3 className="text-2xl font-serif">Email & social links</h3>
+          <p className="text-base text-art-muted">
+            These show on your website footer and About page. Leave a field blank to hide that link.
+          </p>
+          <div>
+            <label className="block text-lg font-medium mb-2">Contact email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="studio@example.com"
+              className="w-full border border-art-border px-4 py-3 text-lg bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium mb-2">Instagram</label>
+            <input
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/yourname"
+              className="w-full border border-art-border px-4 py-3 text-lg bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium mb-2">Artsy</label>
+            <input
+              value={artsyUrl}
+              onChange={(e) => setArtsyUrl(e.target.value)}
+              placeholder="https://www.artsy.net/artist/..."
+              className="w-full border border-art-border px-4 py-3 text-lg bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-lg font-medium mb-2">Pinterest</label>
+            <input
+              value={pinterestUrl}
+              onChange={(e) => setPinterestUrl(e.target.value)}
+              placeholder="https://www.pinterest.com/yourname"
+              className="w-full border border-art-border px-4 py-3 text-lg bg-art-bg dark:bg-art-darkBg focus:border-art-accent focus:outline-none"
+            />
           </div>
         </section>
 

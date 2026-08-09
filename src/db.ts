@@ -107,7 +107,14 @@ export const loginStudio = async (passcode: string, rememberMe: boolean): Promis
 
 export const getProfile = async (): Promise<Profile> => {
   const { profile } = await loadPortfolio();
-  return { ...profile, cv: profile.cv ? [...profile.cv] : [] };
+  return {
+    ...profile,
+    email: profile.email || '',
+    instagramUrl: profile.instagramUrl || '',
+    artsyUrl: profile.artsyUrl || '',
+    pinterestUrl: profile.pinterestUrl || '',
+    cv: profile.cv ? [...profile.cv] : [],
+  };
 };
 
 export const saveProfile = async (profile: Profile): Promise<void> => {

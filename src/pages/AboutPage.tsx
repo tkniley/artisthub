@@ -165,14 +165,54 @@ export const AboutPage: React.FC = () => {
           <span className="text-[9px] uppercase tracking-extra text-art-muted mb-4">Representation & Inquiries</span>
           <h2 className="text-3xl sm:text-4xl font-serif mb-6">Contact the Studio</h2>
           <p className="text-sm text-art-muted dark:text-art-darkMuted mb-8 max-w-xl leading-relaxed">
-            For acquisitions, press kits, catalogs, or private viewing appointments, please contact our administrative studio. We welcome inquiries from curators and collectors globally.
+            For acquisitions, press kits, catalogs, or private viewing appointments, please get in touch. Inquiries from curators and collectors are welcome.
           </p>
-          <a
-            href={`mailto:studio@${profile.name.toLowerCase().replace(/\s+/g, '')}.com`}
-            className="text-lg sm:text-xl font-serif border-b border-art-accent hover:border-art-dark dark:hover:border-art-bg text-art-accent transition-colors duration-300 pb-1"
-          >
-            studio@{profile.name.toLowerCase().replace(/\s+/g, '')}.com
-          </a>
+          {profile.email ? (
+            <a
+              href={`mailto:${profile.email}`}
+              className="text-lg sm:text-xl font-serif border-b border-art-accent hover:border-art-dark dark:hover:border-art-bg text-art-accent transition-colors duration-300 pb-1"
+            >
+              {profile.email}
+            </a>
+          ) : (
+            <p className="text-sm text-art-muted">
+              Use the inquiry form on any gallery piece to reach the studio.
+            </p>
+          )}
+          {(profile.instagramUrl || profile.artsyUrl || profile.pinterestUrl) && (
+            <div className="mt-8 flex flex-wrap justify-center gap-6 text-xs tracking-widest uppercase">
+              {profile.instagramUrl && (
+                <a
+                  href={profile.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-art-accent transition-colors"
+                >
+                  Instagram
+                </a>
+              )}
+              {profile.artsyUrl && (
+                <a
+                  href={profile.artsyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-art-accent transition-colors"
+                >
+                  Artsy
+                </a>
+              )}
+              {profile.pinterestUrl && (
+                <a
+                  href={profile.pinterestUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-art-accent transition-colors"
+                >
+                  Pinterest
+                </a>
+              )}
+            </div>
+          )}
         </section>
 
       </div>
